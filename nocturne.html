@@ -1,0 +1,2930 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#09090c">
+<title>夜航 NOCTURNE · 开放关系模拟</title>
+<meta name="description" content="一个没有剧本的都市恋爱模拟器。输入 DeepSeek API 密钥即可游玩，无立绘，自由行动。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0b0f'/%3E%3Ccircle cx='32' cy='30' r='13' fill='none' stroke='%23f0a86d' stroke-width='2'/%3E%3Ccircle cx='43' cy='22' r='11' fill='%230b0b0f'/%3E%3C/svg%3E">
+<style>
+/* ============================================================
+   夜航 NOCTURNE — 样式
+   ============================================================ */
+:root{
+  --bg:#09090c;
+  --ink:#ece7e1;
+  --ink2:#a49d97;
+  --ink3:#6d6864;
+  --line:rgba(255,255,255,.08);
+  --line2:rgba(255,255,255,.16);
+  --amber:#f0a86d;
+  --rose:#e08e9f;
+  --jade:#7cc4b1;
+  --violet:#a89be6;
+  --panel:rgba(255,255,255,.024);
+  --serif:"Songti SC","STSong","Source Han Serif SC","Noto Serif SC",ui-serif,Georgia,"Times New Roman",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --read:15px;          /* 正文 */
+  --read-lh:1.95;
+  --ui:12.5px;          /* 界面文字 */
+  --micro:10.5px;       /* 标签 */
+  --pad-x:24px;
+}
+html[data-fs="s"]{--read:14px;--read-lh:1.9}
+html[data-fs="m"]{--read:15px;--read-lh:1.95}
+html[data-fs="l"]{--read:16.5px;--read-lh:2.05}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;color:var(--ink);font-family:var(--sans);font-size:var(--ui);overflow:hidden;
+  overscroll-behavior:none;-webkit-tap-highlight-color:transparent;
+  background:
+    radial-gradient(900px 620px at 78% -10%, rgba(240,168,109,.10), transparent 62%),
+    radial-gradient(760px 520px at 4% 108%, rgba(224,142,159,.075), transparent 60%),
+    radial-gradient(700px 700px at 50% 50%, rgba(124,196,177,.035), transparent 70%),
+    var(--bg);
+  -webkit-font-smoothing:antialiased;
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;opacity:.030;z-index:900;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+::selection{background:rgba(240,168,109,.28)}
+button{font-family:inherit;font-size:inherit;cursor:pointer;touch-action:manipulation}
+input,select,textarea{font-family:inherit}
+h1,h2,h3{margin:0;font-weight:400}
+
+/* ---------- 通用控件 ---------- */
+.btn{
+  border:1px solid var(--line2);background:rgba(255,255,255,.03);color:var(--ink);
+  border-radius:10px;padding:9px 16px;font-size:var(--ui);letter-spacing:.04em;
+  transition:.22s ease;min-height:38px;
+}
+.btn:hover{border-color:rgba(240,168,109,.55);color:#fff;background:rgba(240,168,109,.06)}
+.btn.primary{
+  background:linear-gradient(180deg,#f7bd8b,#e0915f);border-color:transparent;color:#1b1210;
+  font-weight:600;box-shadow:0 8px 26px -12px rgba(240,168,109,.85);
+}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.ghost{color:var(--ink2)}
+.btn.ghost:hover{color:var(--ink)}
+.btn.tiny{padding:6px 11px;font-size:11.5px;border-radius:8px;min-height:32px}
+.btn.danger{width:100%;color:#e08e9f;border-color:rgba(224,142,159,.28);background:rgba(224,142,159,.04)}
+.btn.danger:hover{background:rgba(224,142,159,.1);border-color:rgba(224,142,159,.55)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.icon-btn{
+  width:32px;height:32px;border-radius:8px;border:1px solid transparent;background:none;
+  color:var(--ink2);font-size:18px;line-height:1;display:grid;place-items:center;
+}
+.icon-btn:hover{color:var(--ink);background:rgba(255,255,255,.05)}
+.linkish{
+  background:none;border:0;padding:0;color:var(--ink3);font-size:inherit;
+  border-bottom:1px dotted rgba(255,255,255,.2);
+}
+.linkish:hover{color:var(--amber);border-color:var(--amber)}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field-label{font-size:var(--micro);letter-spacing:.14em;color:var(--ink3);text-transform:uppercase}
+.field input,.field select,.field textarea{
+  width:100%;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:9px;
+  color:var(--ink);padding:9px 11px;font-size:13px;outline:none;transition:.2s;
+}
+.field input:focus,.field select:focus{border-color:rgba(240,168,109,.6);box-shadow:0 0 0 3px rgba(240,168,109,.10)}
+.field select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink3) 50%),linear-gradient(135deg,var(--ink3) 50%,transparent 50%);background-position:calc(100% - 16px) 15px,calc(100% - 11px) 15px;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:30px}
+.input-wrap{position:relative;display:block}
+.input-wrap input{padding-right:52px;width:100%;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:9px;color:var(--ink);padding:9px 11px;font-size:13px;outline:none;letter-spacing:.05em}
+.input-wrap input:focus{border-color:rgba(240,168,109,.6);box-shadow:0 0 0 3px rgba(240,168,109,.10)}
+.eye{position:absolute;right:5px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--ink3);font-size:11px;padding:6px 8px;border-radius:6px;min-height:0}
+.key-input{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;letter-spacing:.02em}
+.key-input.bad{border-color:rgba(224,142,159,.55);box-shadow:0 0 0 3px rgba(224,142,159,.08)}
+.key-input.good{border-color:rgba(124,196,177,.5);box-shadow:0 0 0 3px rgba(124,196,177,.07)}
+.key-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:-4px}
+.key-row .btn{flex:0 0 auto;min-height:0;padding:5px 10px;font-size:11px}
+.key-status{font-size:11px;line-height:1.6;color:var(--ink3);flex:1;min-width:0}
+.key-status.ok{color:#96d8bd}
+.key-status.err{color:#e0909f}
+.key-status.warn{color:var(--amber)}
+.key-status.busy{color:var(--ink3)}
+.key-status .sub{display:block;color:var(--ink3);font-size:10px;margin-top:2px;word-break:break-word}
+.eye:hover{color:var(--amber)}
+.check{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--ink2);cursor:pointer;line-height:1.6}
+.check input{accent-color:#e0915f;width:14px;height:14px;margin-top:1px;flex:0 0 auto}
+.hint{font-size:11px;line-height:1.7;color:var(--ink3);margin:0}
+
+/* ---------- 品牌 ---------- */
+.brand{display:flex;flex-direction:column;gap:6px}
+.brand-mark{font-family:var(--serif);letter-spacing:.2em;color:#f3ede6}
+.brand.big .brand-mark{font-size:42px;line-height:1.1;text-shadow:0 0 60px rgba(240,168,109,.28)}
+.brand-en{font-size:9px;letter-spacing:.36em;color:var(--ink3)}
+.brand.small{flex-direction:row;align-items:baseline;gap:9px}
+.brand.small .brand-mark{font-size:17px;letter-spacing:.18em}
+.brand.small .brand-en{font-size:8px;letter-spacing:.28em}
+.brand.tiny .brand-mark{font-size:15px;letter-spacing:.16em;color:var(--ink2)}
+
+/* ---------- 屏幕 ---------- */
+.screen{display:none;height:100dvh;width:100%}
+.screen.active{display:block}
+
+/* ---------- 密钥门 ---------- */
+.lock{display:none;align-items:center;justify-content:center;padding:40px 24px;overflow-y:auto;position:relative}
+.lock.active{display:flex}
+.lock::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    linear-gradient(90deg,transparent 49.9%,rgba(255,255,255,.035) 50%,transparent 50.1%),
+    radial-gradient(520px 320px at 22% 32%, rgba(240,168,109,.13), transparent 70%);
+}
+.lock-inner{position:relative;display:grid;grid-template-columns:1.06fr .94fr;gap:56px;max-width:940px;width:100%;align-items:center}
+.lock-left{min-width:0}
+.lock-tag{font-family:var(--serif);font-size:16px;color:#ded5cc;margin:26px 0 8px;letter-spacing:.04em}
+.lock-sub{font-size:12.5px;line-height:1.95;color:var(--ink2);margin:0}
+.lock-meta{display:flex;align-items:center;gap:11px;margin-top:26px;font-size:10px;letter-spacing:.12em;color:var(--ink3)}
+.lock-meta i{width:1px;height:9px;background:var(--line2)}
+.lock-form{
+  border:1px solid var(--line);border-radius:16px;padding:24px 22px 20px;
+  background:linear-gradient(170deg,rgba(255,255,255,.055),rgba(255,255,255,.012));
+  backdrop-filter:blur(10px);display:flex;flex-direction:column;gap:14px;
+  box-shadow:0 40px 90px -50px rgba(0,0,0,.9);
+}
+.author-badge{
+  display:inline-flex;align-items:center;gap:7px;align-self:flex-start;
+  font-size:10px;letter-spacing:.12em;color:var(--amber);
+  border:1px solid rgba(240,168,109,.32);background:rgba(240,168,109,.08);
+  border-radius:999px;padding:4px 10px;
+}
+.author-badge i{width:5px;height:5px;border-radius:50%;background:var(--amber);box-shadow:0 0 8px var(--amber);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.45}50%{opacity:1}}
+/* ---------- 作者联系方式 ---------- */
+.author{
+  border:1px solid var(--line);border-radius:12px;padding:11px 12px;
+  background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.008));
+  display:flex;flex-direction:column;gap:7px;
+}
+.author.compact{padding:10px 11px}
+.author-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.author-label{
+  font-size:9px;letter-spacing:.24em;color:var(--amber);
+  border:1px solid rgba(240,168,109,.28);background:rgba(240,168,109,.07);
+  padding:1px 6px;border-radius:4px;flex:0 0 auto;
+}
+.author-note{font-size:10px;color:var(--ink3);letter-spacing:.02em}
+.author-row{
+  display:flex;align-items:center;gap:8px;width:100%;text-align:left;
+  background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:8px;
+  padding:6px 9px;min-height:0;transition:.18s;color:var(--ink);
+}
+.author-row:hover{border-color:rgba(240,168,109,.42);background:rgba(240,168,109,.05)}
+.author-row:active{transform:scale(.995)}
+.author-kind{font-size:9.5px;letter-spacing:.1em;color:var(--ink3);flex:0 0 30px}
+.author-val{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:12.5px;letter-spacing:.04em;color:#e7ded6;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.author-copy{font-size:9.5px;color:var(--ink3);letter-spacing:.08em;flex:0 0 auto}
+.author-row:hover .author-copy{color:var(--amber)}
+
+.setup-foot{
+  max-width:1080px;margin:40px auto 0;padding:16px 0 8px;border-top:1px solid var(--line);
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  font-size:10.5px;color:var(--ink3);letter-spacing:.03em;
+}
+.setup-foot .dotsep{opacity:.4}
+.author-link{
+  background:none;border:0;padding:0;min-height:0;color:var(--ink2);font-size:inherit;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em;
+  border-bottom:1px dotted rgba(255,255,255,.18);
+}
+.author-link:hover{color:var(--amber);border-color:var(--amber)}
+
+/* 暗线进度 */
+.thread-progress{display:flex;align-items:center;gap:6px;font-size:9.5px;color:var(--ink3);margin-bottom:6px}
+.thread-progress b{color:var(--ink2);font-weight:500;letter-spacing:.04em;font-size:9.5px}
+.thread-progress i{flex:1;height:2px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden}
+.thread-progress em{display:block;height:100%;background:linear-gradient(90deg,rgba(124,196,177,.6),var(--jade));transition:width .5s}
+
+.form-title{font-family:var(--serif);font-size:19px;letter-spacing:.12em}
+.form-sub{font-size:11.5px;line-height:1.7;color:var(--ink3);margin:-8px 0 2px}
+.adv{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:9px 0}
+.adv summary{font-size:11.5px;color:var(--ink3);cursor:pointer;letter-spacing:.05em;list-style:none}
+.adv summary::-webkit-details-marker{display:none}
+.adv summary::before{content:"+ ";color:var(--amber)}
+.adv[open] summary::before{content:"− "}
+.adv-grid{display:grid;gap:10px;margin-top:12px}
+.lock-actions{display:flex;gap:9px}
+.lock-actions .btn{flex:1}
+.btn-return{background:none;border:0;color:var(--ink3);font-size:11.5px;letter-spacing:.06em;padding:4px;border-bottom:1px solid transparent;align-self:flex-start;min-height:0}
+.btn-return:hover{color:var(--amber)}
+
+/* ---------- 开局 ---------- */
+.setup{overflow-y:auto;padding:0 24px 70px;-webkit-overflow-scrolling:touch}
+.setup-head{display:flex;justify-content:space-between;align-items:center;max-width:1080px;margin:0 auto;padding:18px 0}
+.setup-body{max-width:1080px;margin:0 auto;padding-top:16px}
+.setup-title{font-family:var(--serif);font-size:clamp(21px,2.8vw,29px);letter-spacing:.09em;line-height:1.4}
+.setup-sub{color:var(--ink2);font-size:12.5px;margin:10px 0 28px;letter-spacing:.03em}
+.preset-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.pcard{
+  text-align:left;border:1px solid var(--line);border-radius:14px;padding:18px 17px 15px;
+  background:linear-gradient(165deg,rgba(255,255,255,.05),rgba(255,255,255,.012));
+  transition:.26s cubic-bezier(.2,.7,.3,1);position:relative;overflow:hidden;color:var(--ink);
+}
+.pcard::before{
+  content:"";position:absolute;inset:-40% -30% auto auto;width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(240,168,109,.20),transparent 68%);opacity:.5;transition:.3s;
+}
+.pcard:hover{transform:translateY(-3px);border-color:rgba(240,168,109,.4)}
+.pcard:hover::before{opacity:1}
+.pcard.on{border-color:rgba(240,168,109,.75);box-shadow:0 0 0 1px rgba(240,168,109,.3),0 24px 60px -34px rgba(240,168,109,.6)}
+.pcard .p-en{display:block;font-size:8.5px;letter-spacing:.3em;color:var(--ink3);position:relative}
+.pcard .p-title{font-family:var(--serif);font-size:17px;letter-spacing:.09em;margin:9px 0 8px;position:relative}
+.pcard .p-tag{font-size:11.5px;line-height:1.8;color:var(--ink2);position:relative;min-height:3.2em}
+.pcard .p-cast{display:flex;gap:5px;margin-top:14px;position:relative;flex-wrap:wrap}
+.pcard .dot{font-size:10px;color:var(--ink3);display:flex;align-items:center;gap:4px}
+.pcard .dot i{width:4px;height:4px;border-radius:50%;background:currentColor;display:block}
+.setup-config{margin-top:24px;border:1px solid var(--line);border-radius:14px;padding:20px;background:rgba(255,255,255,.018);animation:rise .4s both}
+.cfg-head{display:flex;align-items:baseline;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.cfg-head h3{font-family:var(--serif);font-size:16px;letter-spacing:.08em}
+.cfg-note{font-size:11px;color:var(--ink3)}
+.cfg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.cfg-cast{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:16px 0 12px}
+.cast-item{border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:rgba(0,0,0,.2)}
+.cast-item .cast-top{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.cast-item .cast-dot{width:6px;height:6px;border-radius:50%;background:var(--c);box-shadow:0 0 12px var(--c)}
+.cast-item .cast-role{font-size:10px;color:var(--ink3);letter-spacing:.05em}
+.cast-item input{width:100%;background:none;border:0;border-bottom:1px solid var(--line);color:var(--ink);font-size:14px;padding:2px 0 4px;outline:none;font-family:var(--serif);letter-spacing:.05em}
+.cast-item input:focus{border-color:var(--c)}
+.cfg-actions{display:flex;justify-content:flex-end;margin-top:6px}
+
+/* ---------- 游戏框架 ---------- */
+.game{display:none}
+.game.active{display:block}
+.app{
+  display:grid;height:100dvh;
+  grid-template-columns:264px minmax(0,1fr) 318px;
+  grid-template-rows:50px minmax(0,1fr);
+  grid-template-areas:"top top top" "left center right";
+}
+.top{
+  grid-area:top;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:0 14px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(9,9,12,.9),rgba(9,9,12,.6));backdrop-filter:blur(12px);z-index:20;
+}
+.top-left,.top-right{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.hud{display:flex;align-items:center;gap:12px;flex:1;justify-content:center;overflow:hidden}
+.hud .h-item{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink2);white-space:nowrap}
+.hud .h-item b{color:#e6dfd8;font-weight:500;letter-spacing:.04em}
+.hud .h-sep{width:1px;height:10px;background:var(--line);flex:0 0 auto}
+.hud .h-loc{color:var(--amber);font-size:11.5px;letter-spacing:.06em;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.only-mobile{display:none}
+
+.panel-left{grid-area:left;border-right:1px solid var(--line);overflow-y:auto;padding:16px 13px 14px;display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch}
+.panel-right{grid-area:right;border-left:1px solid var(--line);overflow-y:auto;padding:14px 13px calc(34px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch}
+.center{grid-area:center;display:flex;flex-direction:column;min-width:0;min-height:0;position:relative;overflow:hidden}
+
+/* ---------- 侧栏 ---------- */
+.panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.panel-head h2{font-family:var(--serif);font-size:14px;letter-spacing:.16em}
+.panel-sub{font-size:9.5px;letter-spacing:.1em;color:var(--ink3);white-space:nowrap}
+.risk-wrap{display:flex;align-items:center;gap:8px}
+.risk-bar{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.07);overflow:hidden}
+.risk-bar b{display:block;height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,#7cc4b1,#f0a86d 62%,#e0708a);transition:width .6s cubic-bezier(.2,.7,.3,1)}
+.risk-val{font-size:10px;color:var(--ink3);width:18px;text-align:right}
+
+.pstats{display:none;flex-wrap:wrap;gap:4px 12px;font-size:10.5px;color:var(--ink3);letter-spacing:.04em}
+.pstats b{color:#cdc5be;font-weight:500}
+
+.hlist{display:flex;flex-direction:column;gap:7px}
+.hcard{
+  display:flex;gap:10px;align-items:center;text-align:left;width:100%;
+  border:1px solid var(--line);border-radius:11px;padding:10px;background:rgba(255,255,255,.016);
+  transition:.22s;position:relative;overflow:hidden;color:var(--ink);min-height:0;
+}
+.hcard:hover{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.16)}
+.hcard.on{border-color:var(--c)}
+.hcard.on{border-color:color-mix(in srgb,var(--c) 50%,transparent);background:color-mix(in srgb,var(--c) 8%,transparent)}
+.hcard .sig{position:relative;width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center}
+.hcard .sig-ring{
+  position:absolute;inset:0;border-radius:50%;
+  border:1px solid color-mix(in srgb,var(--c) 50%,transparent);
+  background:radial-gradient(circle at 50% 35%,color-mix(in srgb,var(--c) 22%,transparent),transparent 70%);
+  box-shadow:0 0 16px -6px var(--c);
+}
+.hcard .sig-char{position:relative;font-family:var(--serif);font-size:14px;color:var(--c)}
+.hcard .hinfo{min-width:0;flex:1}
+.hcard .hname{display:flex;align-items:center;gap:6px;font-size:12.5px;color:#e9e3dc;letter-spacing:.03em}
+.hcard .hname em{font-style:normal;font-size:9px;letter-spacing:.08em;color:var(--c);border:1px solid color-mix(in srgb,var(--c) 32%,transparent);padding:0 4px;border-radius:3px}
+.hcard .hrole{display:block;font-size:10px;color:var(--ink3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hcard .bars{display:flex;flex-direction:column;gap:3px;margin-top:6px}
+.hcard .bars i{display:block;height:2px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden}
+.hcard .bars i b{display:block;height:100%;width:0;transition:width .6s cubic-bezier(.2,.7,.3,1)}
+.hcard .bars i.a b{background:var(--c)}
+.hcard .bars i.t b{background:linear-gradient(90deg,rgba(240,168,109,.5),#f0a86d)}
+.left-foot{margin-top:auto;padding-top:9px;border-top:1px solid var(--line);font-size:10.5px;color:var(--ink3);line-height:1.8}
+.left-foot p{margin:0}
+.left-foot .mini{font-size:9.5px}
+
+/* ---------- 正文流 ---------- */
+.stream{flex:1;overflow-y:auto;padding:6px var(--pad-x) 22px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.stream > *{max-width:640px;margin-left:auto;margin-right:auto}
+.stream::-webkit-scrollbar{width:7px}
+.stream::-webkit-scrollbar-thumb{background:rgba(255,255,255,.09);border-radius:4px}
+.stream::-webkit-scrollbar-track{background:transparent}
+
+.scene-title{display:flex;align-items:center;gap:10px;margin:26px auto 14px;font-size:9.5px;letter-spacing:.24em;color:var(--ink3)}
+.scene-title::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+.scene-title .st-meta{letter-spacing:.14em;color:rgba(255,255,255,.2);font-size:9px;white-space:nowrap}
+.block.nar{animation:rise .55s cubic-bezier(.2,.7,.3,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.nar p{
+  font-family:var(--serif);font-size:var(--read);line-height:var(--read-lh);color:#ddd6cf;
+  margin:0 0 1em;letter-spacing:.015em;
+}
+.nar p:last-child{margin-bottom:0}
+.nar .line{margin:0 0 1.05em;padding:1px 0 1px 12px;border-left:1px solid color-mix(in srgb,var(--c) 45%,transparent);position:relative}
+.nar .line .who{display:block;font-family:var(--sans);font-size:9.5px;letter-spacing:.16em;color:var(--c);margin-bottom:3px;opacity:.95}
+.nar .line .say{font-family:var(--serif);font-size:var(--read);line-height:1.85;color:#f0eae3;margin:0;letter-spacing:.015em}
+.nar .line.quote{border-left-color:rgba(255,255,255,.14)}
+.nar .line.quote .say{color:#cfc7c0}
+
+.acted{display:flex;align-items:baseline;gap:8px;margin:22px auto 14px;font-size:11.5px;color:var(--ink2)}
+.acted b{font-weight:500;color:var(--amber);font-size:9.5px;letter-spacing:.18em;border:1px solid rgba(240,168,109,.3);padding:1px 6px;border-radius:4px;flex:0 0 auto}
+.acted span{line-height:1.65;color:#c8c0b9}
+.acted em{margin-left:auto;font-style:normal;font-size:9.5px;color:rgba(255,255,255,.18);letter-spacing:.08em;flex:0 0 auto;white-space:nowrap}
+
+.deltas{display:flex;flex-wrap:wrap;gap:6px;margin:-4px auto 14px}
+.delta{
+  font-size:10.5px;letter-spacing:.04em;padding:2px 8px;border-radius:999px;
+  border:1px solid var(--line);color:var(--ink2);background:rgba(255,255,255,.02);
+  animation:pop .4s cubic-bezier(.2,.9,.3,1) both;
+}
+@keyframes pop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+.delta.up{color:#96d8bd;border-color:rgba(150,216,189,.22);background:rgba(150,216,189,.05)}
+.delta.down{color:#e0909f;border-color:rgba(224,144,159,.22);background:rgba(224,144,159,.05)}
+.delta.up::before{content:"↑ "}
+.delta.down::before{content:"↓ "}
+
+.unlock{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline;margin:-2px auto 14px;font-size:11px;color:var(--ink2)}
+.unlock .tag{font-size:9px;letter-spacing:.16em;color:var(--jade);border:1px solid rgba(124,196,177,.3);padding:1px 6px;border-radius:4px}
+.unlock span{padding-right:10px;line-height:1.7}
+.note{max-width:640px;margin:12px auto;font-size:10.5px;letter-spacing:.08em;color:var(--ink3);text-align:center}
+.author .author-row + .author-row{margin-top:0}
+.notice{
+  max-width:640px;margin:14px auto 0;display:flex;gap:10px;align-items:flex-start;
+  border:1px solid rgba(240,168,109,.22);background:rgba(240,168,109,.05);
+  border-radius:10px;padding:10px 12px;font-size:10.5px;line-height:1.75;color:#d8c4b2;
+}
+.notice b{flex:0 0 auto;font-weight:500;font-size:9px;letter-spacing:.16em;color:var(--amber);border:1px solid rgba(240,168,109,.32);border-radius:4px;padding:1px 6px;margin-top:1px}
+.notice span{min-width:0}
+.errbox{max-width:640px;margin:14px auto;border:1px solid rgba(224,142,159,.35);background:rgba(224,142,159,.07);border-radius:10px;padding:11px 13px;font-size:11.5px;line-height:1.8;color:#e9b4bf}
+.errbox b{display:block;color:#f0c0c9;margin-bottom:3px;font-weight:500}
+.ending{max-width:640px;margin:26px auto;border:1px solid rgba(240,168,109,.28);border-radius:14px;padding:20px 20px 14px;background:linear-gradient(170deg,rgba(240,168,109,.07),rgba(255,255,255,.01))}
+.ending .en-t{font-size:9.5px;letter-spacing:.26em;color:var(--amber);margin-bottom:12px}
+.ending p{font-family:var(--serif);font-size:calc(var(--read) - .5px);line-height:var(--read-lh);color:#e7e0d9;margin:0 0 .8em}
+
+.thinking{display:flex;align-items:center;justify-content:center;gap:8px;padding:0 0 8px;font-size:10.5px;letter-spacing:.14em;color:var(--ink3)}
+.thinking[hidden]{display:none}
+.dots{display:inline-flex;gap:3px}
+.dots i{width:3px;height:3px;border-radius:50%;background:var(--amber);opacity:.35;animation:blink 1.2s infinite}
+.dots i:nth-child(2){animation-delay:.18s}
+.dots i:nth-child(3){animation-delay:.36s}
+@keyframes blink{0%,100%{opacity:.2;transform:translateY(0)}50%{opacity:.95;transform:translateY(-2px)}}
+
+/* ---------- 输入区 ---------- */
+.composer{padding:8px var(--pad-x) 14px;background:linear-gradient(180deg,rgba(9,9,12,0),rgba(9,9,12,.94) 40%)}
+.composer > *{max-width:640px;margin:0 auto}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chip{
+  border:1px solid var(--line);background:rgba(255,255,255,.022);color:var(--ink2);
+  border-radius:999px;padding:5px 11px;font-size:11px;letter-spacing:.02em;transition:.2s;
+  white-space:nowrap;min-height:0;
+}
+.chip:hover,.chip:active{border-color:rgba(240,168,109,.5);color:var(--amber);background:rgba(240,168,109,.06)}
+.chip.fixed{color:var(--ink3)}
+.composer-row{display:flex;align-items:flex-end;gap:8px;border:1px solid var(--line2);border-radius:14px;padding:7px 7px 7px 12px;background:rgba(255,255,255,.035);transition:.2s}
+.composer-row:focus-within{border-color:rgba(240,168,109,.55);box-shadow:0 0 0 3px rgba(240,168,109,.07)}
+#actionInput{flex:1;background:none;border:0;outline:none;color:var(--ink);font-size:14px;line-height:1.65;resize:none;max-height:110px;padding:5px 0}
+#actionInput::placeholder{color:rgba(255,255,255,.22)}
+.send{width:34px;height:34px;flex:0 0 34px;border-radius:9px;border:0;background:linear-gradient(180deg,#f7bd8b,#e0915f);color:#1b1210;display:grid;place-items:center;transition:.2s}
+.send:hover{filter:brightness(1.08)}
+.send:disabled{opacity:.35;filter:none}
+.composer-foot{display:flex;justify-content:space-between;gap:10px;margin-top:6px;font-size:9.5px;color:rgba(255,255,255,.2);letter-spacing:.03em}
+.composer-foot .desk-only{display:inline}
+.ended-banner{
+  position:absolute;left:50%;bottom:96px;transform:translateX(-50%);z-index:12;
+  display:flex;align-items:center;gap:10px;border:1px solid rgba(240,168,109,.3);
+  background:rgba(20,16,14,.95);backdrop-filter:blur(10px);border-radius:12px;padding:10px 13px;
+  box-shadow:0 24px 60px -30px #000;max-width:calc(100% - 24px);
+}
+.ended-banner[hidden]{display:none}
+.ended-banner .en-title{font-size:11.5px;color:var(--amber);letter-spacing:.06em;white-space:nowrap}
+.ended-banner .en-actions{display:flex;gap:6px}
+
+/* ---------- 右栏卡片 ---------- */
+.card{border:1px solid var(--line);border-radius:11px;padding:13px;background:rgba(255,255,255,.016)}
+.card h3{font-size:9.5px;letter-spacing:.2em;color:var(--ink3);margin-bottom:9px;font-weight:400}
+.card-note{font-size:9.5px;color:rgba(255,255,255,.2);margin:6px 0 0;line-height:1.65}
+.starmap{width:100%;height:auto;display:block}
+.starmap .sm-name{font-size:8px;font-family:var(--sans);letter-spacing:.06em;text-anchor:middle;opacity:.9}
+.starmap .sm-you{font-size:8px;fill:rgba(255,255,255,.35);text-anchor:middle;letter-spacing:.08em}
+
+.pf-head{display:flex;align-items:center;gap:9px;margin-bottom:2px}
+.pf-sig{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:0 0 30px;border:1px solid color-mix(in srgb,var(--c) 50%,transparent);background:radial-gradient(circle at 50% 35%,color-mix(in srgb,var(--c) 20%,transparent),transparent 70%);font-family:var(--serif);font-size:13px;color:var(--c)}
+.pf-head > span:nth-child(2){display:flex;flex-direction:column;min-width:0}
+.pf-name{display:block;font-family:var(--serif);font-size:16px;letter-spacing:.08em}
+.pf-role{display:block;font-size:10px;color:var(--ink3);margin-top:2px}
+.pf-stage{font-size:9px;letter-spacing:.1em;color:var(--c);margin-left:auto;border:1px solid color-mix(in srgb,var(--c) 30%,transparent);padding:1px 5px;border-radius:3px;white-space:nowrap}
+.pf-tags{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0}
+.pf-tags span{font-size:10px;color:var(--ink2);border:1px solid var(--line);border-radius:3px;padding:1px 6px}
+.meter{margin:9px 0}
+.meter .m-top{display:flex;justify-content:space-between;font-size:10px;color:var(--ink3);margin-bottom:4px}
+.meter .m-top b{color:var(--ink2);font-weight:500}
+.meter .m-bar{height:2px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden}
+.meter .m-bar b{display:block;height:100%;width:0;transition:width .6s cubic-bezier(.2,.7,.3,1)}
+.meter.a .m-bar b{background:var(--c)}
+.meter.t .m-bar b{background:#f0a86d}
+.meter.r .m-bar b{background:#7cc4b1}
+.pf-sub{font-size:9px;letter-spacing:.16em;color:rgba(255,255,255,.24);margin:13px 0 7px}
+.pf-known{display:flex;flex-direction:column;gap:6px}
+.pf-known div{font-size:11.5px;line-height:1.6;color:#c9c2bb;padding-left:9px;position:relative}
+.pf-known div::before{content:"";position:absolute;left:0;top:7px;width:3px;height:3px;border-radius:50%;background:var(--jade);opacity:.8}
+.pf-empty{font-size:11px;color:rgba(255,255,255,.22);line-height:1.7}
+.pf-note{font-size:11px;color:var(--ink2);line-height:1.7;border-left:1px solid var(--line2);padding-left:8px;margin-top:10px}
+.pf-note em{color:var(--ink3);font-style:normal;font-size:9px;letter-spacing:.12em;display:block;margin-bottom:2px}
+
+.log-card{flex:1;min-height:120px;display:flex;flex-direction:column}
+.chronicle{display:flex;flex-direction:column;gap:7px;overflow-y:auto;max-height:240px}
+.chronicle .c-item{display:flex;gap:7px;font-size:11px;line-height:1.65}
+.chronicle .c-item time{color:rgba(255,255,255,.22);flex:0 0 auto;font-size:9.5px;letter-spacing:.03em;padding-top:2px}
+.chronicle .c-item span{color:#b3aba4}
+
+/* ---------- 弹窗 ---------- */
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:200;background:rgba(4,4,6,.72);backdrop-filter:blur(6px);padding:18px}
+.modal.open{display:flex}
+.modal-card{width:100%;max-width:420px;max-height:88dvh;overflow-y:auto;border:1px solid var(--line2);border-radius:16px;background:#101014;box-shadow:0 40px 100px -40px #000;-webkit-overflow-scrolling:touch}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:15px 17px;border-bottom:1px solid var(--line)}
+.modal-head h3{font-family:var(--serif);font-size:14px;letter-spacing:.16em}
+.modal-body{padding:15px 17px;display:flex;flex-direction:column;gap:13px}
+.modal-body hr{border:0;border-top:1px solid var(--line);margin:2px 0;width:100%}
+.modal-body .row{display:flex;gap:8px}
+.modal-body .row .btn{flex:1}
+.modal-foot{padding:12px 17px calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+.modal-foot .btn{width:100%}
+.code{margin:0;white-space:pre-wrap;word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;line-height:1.6;color:#b9d6c9;background:rgba(0,0,0,.42);border:1px solid var(--line);border-radius:8px;padding:10px;max-height:200px;overflow:auto}
+.seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{flex:1;background:none;border:0;color:var(--ink2);font-size:11.5px;padding:8px 0;transition:.18s}
+.seg button + button{border-left:1px solid var(--line)}
+.seg button.on{background:rgba(240,168,109,.14);color:var(--amber)}
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:30;display:none}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,14px);z-index:400;background:rgba(24,20,18,.96);border:1px solid var(--line2);color:var(--ink);padding:9px 15px;border-radius:9px;font-size:11.5px;letter-spacing:.03em;opacity:0;pointer-events:none;transition:.3s;max-width:calc(100% - 32px);text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- 平板 ---------- */
+@media(max-width:1180px){
+  .app{grid-template-columns:248px minmax(0,1fr);grid-template-areas:"top top" "left center"}
+  .panel-right{position:fixed;top:0;right:0;bottom:0;width:340px;max-width:86vw;z-index:60;background:#0c0c10;transform:translateX(102%);transition:transform .3s cubic-bezier(.3,.8,.3,1);border-left:1px solid var(--line);box-shadow:-30px 0 80px -40px #000}
+  body.right-open .panel-right{transform:none}
+  body.right-open .backdrop{display:block;z-index:50}
+  .only-mobile{display:grid}
+}
+
+/* ---------- 手机 ---------- */
+@media(max-width:900px){
+  :root{--pad-x:14px}
+  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:46px minmax(0,1fr);grid-template-areas:"top" "center"}
+  .top{padding:0 8px;gap:4px}
+  .top-left,.top-right{gap:2px}
+  .icon-btn{width:34px;height:34px;font-size:17px}
+  .btn.tiny{padding:5px 9px;font-size:11px;min-height:30px}
+  .hcard{padding:11px 10px}
+  .hcard .sig{width:36px;height:36px;flex:0 0 36px}
+  .hud{gap:8px;justify-content:flex-start;padding-left:2px}
+  .hud .h-item{font-size:10.5px}
+  .hud .h-item .h-loc{font-size:10.5px}
+  .hud .h-sep{display:none}
+  .hud .h-item.money,.hud .h-sep.money{display:none}
+  .panel-left{position:fixed;top:0;left:0;bottom:0;width:276px;max-width:84vw;z-index:60;background:#0c0c10;transform:translateX(-102%);transition:transform .3s cubic-bezier(.3,.8,.3,1);box-shadow:30px 0 80px -40px #000;padding-top:14px}
+  body.left-open .panel-left{transform:none;border-right:1px solid var(--line)}
+  body.left-open .backdrop{display:block;z-index:50}
+  .stream{padding:2px var(--pad-x) 10px}
+  .composer{padding:6px var(--pad-x) calc(8px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(9,9,12,0),rgba(9,9,12,.97) 34%)}
+  .chips{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:0 -2px 7px;padding:1px 2px 3px}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;font-size:11px;padding:6px 11px}
+  #actionInput{font-size:16px;line-height:1.55;max-height:96px}
+  .composer-row{border-radius:13px;padding:6px 6px 6px 11px}
+  .send{width:36px;height:36px;flex:0 0 36px}
+  .composer-foot{font-size:9px}
+  .composer-foot .desk-only{display:none}
+  .acted{margin:18px auto 10px;font-size:11px}
+  .scene-title{margin:20px auto 10px}
+  .lock{padding:22px 16px}
+  .lock-inner{grid-template-columns:1fr;gap:22px}
+  .lock-left .lock-meta{display:none}
+  .lock::before{background:radial-gradient(420px 300px at 50% 15%, rgba(240,168,109,.12), transparent 70%)}
+  .brand.big .brand-mark{font-size:32px}
+  .lock-tag{margin:16px 0 6px;font-size:14px}
+  .lock-sub{font-size:12px;line-height:1.85}
+  .form-title{font-size:17px}
+  .lock-form{padding:18px 16px 16px;border-radius:14px;gap:12px}
+  /* iOS 上小于 16px 的输入框会在聚焦时自动放大页面，把这个尺寸钉死 */
+  .field input,.field select,.field textarea,.input-wrap input,.key-input,.cast-item input{font-size:16px}
+  .key-input{font-size:16px;letter-spacing:0}
+  .key-status{font-size:10.5px}
+  .setup{padding:0 14px 60px}
+  .setup-foot{margin-top:28px;font-size:10px;gap:6px}
+  .author-row{padding:7px 9px}
+  .author-val{font-size:13px}
+  .author-note{font-size:9.5px}
+  .setup-head{padding:14px 0}
+  .setup-body{padding-top:8px}
+  .setup-sub{margin:8px 0 18px}
+  .preset-grid{grid-template-columns:1fr;gap:9px}
+  .pcard{padding:14px 14px 12px}
+  .pcard .p-tag{min-height:0;font-size:11px;line-height:1.7}
+  .pcard .p-cast{margin-top:10px}
+  .setup-config{padding:16px 14px;margin-top:18px}
+  .cfg-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .cfg-cast{grid-template-columns:1fr;gap:8px}
+  .modal{align-items:flex-end;padding:0}
+  .modal-card{max-width:100%;border-radius:16px 16px 0 0;max-height:90dvh;border-bottom:0}
+  .ended-banner{bottom:calc(88px + env(safe-area-inset-bottom));flex-direction:column;align-items:stretch;gap:8px;padding:10px 12px}
+  .ended-banner .en-actions .btn{flex:1}
+  .toast{bottom:calc(96px + env(safe-area-inset-bottom))}
+  .panel-right{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+}
+
+@media(max-width:560px){
+  :root{--ui:12px;--micro:10px}
+  .hud .h-item.energy{display:none}
+  .pstats{display:flex}
+  .pf-tags{margin:8px 0}
+  .cfg-grid{grid-template-columns:1fr}
+  .lock-actions{flex-direction:column}
+  .btn{padding:9px 14px}
+  .delta{font-size:10px;padding:2px 7px}
+  .ending{padding:16px 15px 10px;border-radius:12px}
+}
+
+/* 横屏手机：压扁顶栏与输入区 */
+@media(max-height:520px) and (max-width:900px){
+  .chips{display:none}
+  .composer-foot{display:none}
+  .stream{padding-top:0}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms !important;transition-duration:.01ms !important}
+}
+
+</style>
+</head>
+<body>
+
+<!-- ========== 密钥门 ========== -->
+<section class="screen lock active" id="screen-lock">
+  <div class="lock-inner">
+    <div class="lock-left">
+      <div class="brand big">
+        <span class="brand-mark">夜航</span>
+        <span class="brand-en">N O C T U R N E</span>
+      </div>
+      <p class="lock-tag">一个没有剧本的都市恋爱模拟器。</p>
+      <p class="lock-sub">没有立绘，没有攻略，没有正确答案。<br>你可以同时对三个人心动，也可以谁都不要。</p>
+      <div class="lock-meta">
+        <span>5 个世界</span><i></i><span>15 条人物线</span><i></i><span>自由输入任意行动</span><i></i><span>DeepSeek 驱动</span>
+      </div>
+    </div>
+
+    <div class="lock-right">
+      <form class="lock-form" id="lockForm" novalidate>
+        <h2 class="form-title">进入城市</h2>
+        <p class="form-sub">需要一枚你自己的 DeepSeek API 密钥。<br>它只保存在这台设备的浏览器里，作者看不到。</p>
+
+        <label class="field">
+          <span class="field-label">API 密钥</span>
+          <span class="input-wrap">
+            <input id="apiKey" type="text" class="key-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" placeholder="sk-••••••••••••••••" aria-describedby="keyStatus">
+            <button type="button" class="eye" id="toggleKey">隐藏</button>
+          </span>
+        </label>
+
+        <div class="key-row">
+          <button type="button" class="btn tiny ghost" id="btnVerify">验证密钥</button>
+          <span class="key-status" id="keyStatus" role="status" aria-live="polite">还没有验证</span>
+        </div>
+
+        <details class="adv" open>
+          <summary>接口地址与模型</summary>
+          <div class="adv-grid">
+            <label class="field">
+              <span class="field-label">Base URL</span>
+              <input id="baseUrl" type="text" value="https://api.deepseek.com" spellcheck="false">
+            </label>
+            <label class="field">
+              <span class="field-label">模型</span>
+              <select id="model">
+                <option value="deepseek-chat">deepseek-chat（推荐）</option>
+                <option value="deepseek-reasoner">deepseek-reasoner（更慢）</option>
+              </select>
+            </label>
+          </div>
+        </details>
+
+        <label class="check">
+          <input type="checkbox" id="rememberKey" checked>
+          <span>在这台设备上记住密钥</span>
+        </label>
+
+        <div class="lock-actions">
+          <button class="btn primary" id="btnEnter" type="submit">进入城市</button>
+        </div>
+
+        <button class="btn-return" id="btnDemo" type="button">预览模式（不用密钥，不消耗额度）</button>
+        <button class="btn-return" id="btnContinue" type="button" hidden>继续上一次的夜晚 →</button>
+
+        <div class="author" id="authorCard">
+          <div class="author-top">
+            <span class="author-label">作者</span>
+            <span class="author-note">有问题、想加剧情，直接找我</span>
+          </div>
+          <button type="button" class="author-row" data-copy="58915573475">
+            <span class="author-kind">抖音</span>
+            <span class="author-val">58915573475</span>
+            <span class="author-copy">复制</span>
+          </button>
+          <button type="button" class="author-row" data-copy="3494639277">
+            <span class="author-kind">QQ</span>
+            <span class="author-val">3494639277</span>
+            <span class="author-copy">复制</span>
+          </button>
+        </div>
+
+        <p class="hint" id="lockHint">
+          密钥只存在本机 localStorage，只会发送到你填写的接口地址。若提示连不上接口，请把本页下载到本地用浏览器打开。
+        </p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 开局选择 ========== -->
+<section class="screen setup" id="screen-setup">
+  <header class="setup-head">
+    <div class="brand small"><span class="brand-mark">夜航</span><span class="brand-en">NOCTURNE</span></div>
+    <button class="btn tiny ghost" id="btnBackLock" type="button">返回</button>
+  </header>
+
+  <div class="setup-body">
+    <h1 class="setup-title">今晚，你想去哪里？</h1>
+    <p class="setup-sub">选一个起点。每个世界都有自己的暗线，会在你没注意的时候往前走。</p>
+
+    <div class="preset-grid" id="presetGrid"></div>
+
+    <div class="setup-config" id="setupConfig" hidden>
+      <div class="cfg-head">
+        <h3 id="cfgTitle">开局设置</h3>
+        <span class="cfg-note">都可以改。名字只是代号。</span>
+      </div>
+
+      <div class="cfg-grid">
+        <label class="field">
+          <span class="field-label">你的名字</span>
+          <input id="cfgPlayer" type="text" value="你" maxlength="8">
+        </label>
+        <label class="field">
+          <span class="field-label">叙事风格</span>
+          <select id="cfgTone">
+            <option value="restrained">克制文艺</option>
+            <option value="light">轻快日常</option>
+            <option value="intense">浓烈暧昧</option>
+            <option value="dry">黑色幽默</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="field-label">亲密尺度</span>
+          <select id="cfgHeat">
+            <option value="subtle">含蓄</option>
+            <option value="warm" selected>微热</option>
+            <option value="close">暧昧</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="cfg-cast" id="cfgCast"></div>
+      <p class="hint">本作不含任何人物立绘与外貌描写——所有形象由文字与你的想象完成。</p>
+
+      <div class="cfg-actions">
+        <button class="btn primary" id="btnStart" type="button">进入今夜</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="setup-foot">
+    <span>夜航 NOCTURNE</span>
+    <span class="dotsep">·</span>
+    <span>作者 抖音 <button type="button" class="author-link" data-copy="58915573475">58915573475</button></span>
+    <span class="dotsep">·</span>
+    <span>QQ <button type="button" class="author-link" data-copy="3494639277">3494639277</button></span>
+  </footer>
+</section>
+
+<!-- ========== 游戏 ========== -->
+<section class="screen game" id="screen-game">
+  <div class="app">
+    <header class="top">
+      <div class="top-left">
+        <button class="icon-btn only-mobile" id="btnRelations" aria-label="关系">☰</button>
+        <span class="brand tiny"><span class="brand-mark">夜航</span></span>
+      </div>
+      <div class="hud" id="hud"></div>
+      <div class="top-right">
+        <button class="btn tiny ghost" id="btnArchive" type="button">档案</button>
+        <button class="btn tiny ghost" id="btnSettings" type="button">设置</button>
+      </div>
+    </header>
+
+    <aside class="panel-left" id="panelLeft">
+      <div class="panel-head">
+        <h2>关系</h2>
+        <span class="panel-sub" id="riskLabel">修罗场风险</span>
+      </div>
+      <div class="risk-wrap">
+        <div class="risk-bar"><b id="riskBar"></b></div>
+        <span class="risk-val" id="riskVal">0</span>
+      </div>
+      <div class="pstats" id="pstats"></div>
+      <div id="heroineList" class="hlist"></div>
+      <div class="left-foot">
+        <div class="thread-progress" id="threadProgress"></div>
+        <p>点一个人，看你知道多少。</p>
+        <p class="mini">状态：<span id="modeTag">—</span></p>
+      </div>
+    </aside>
+
+    <main class="center">
+      <div class="stream" id="stream"></div>
+      <div class="thinking" id="thinking" hidden>
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span id="thinkText">世界正在回应</span>
+      </div>
+      <div class="composer" id="composer">
+        <div class="chips" id="chips"></div>
+        <div class="composer-row">
+          <textarea id="actionInput" rows="1" placeholder="你想做什么？说什么？——任何行动都可以。" maxlength="300"></textarea>
+          <button class="send" id="btnSend" type="button" aria-label="发送">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </button>
+        </div>
+        <div class="composer-foot">
+          <span class="desk-only">Enter 发送 · Shift+Enter 换行 · <button type="button" class="linkish" id="dirHint">「//」开头可以下导演指令</button></span>
+          <span id="turnCount"></span>
+        </div>
+      </div>
+      <div class="ended-banner" id="endedBanner" hidden>
+        <div class="en-title" id="endedTitle"></div>
+        <div class="en-actions">
+          <button class="btn ghost" id="btnEndedContinue" type="button">继续这一段</button>
+          <button class="btn ghost" id="btnEndedRestart" type="button">重新开始</button>
+        </div>
+      </div>
+    </main>
+
+    <aside class="panel-right" id="panelRight">
+      <section class="card starmap-card">
+        <h3>关系星图</h3>
+        <div id="starmap"></div>
+        <p class="card-note" id="starmapNote">线的粗细是心动，虚线是裂痕。</p>
+      </section>
+      <section class="card" id="profileCard"></section>
+      <section class="card log-card">
+        <h3>编年史</h3>
+        <div id="chronicle" class="chronicle"></div>
+      </section>
+    </aside>
+  </div>
+</section>
+
+<!-- ========== 设置弹窗 ========== -->
+<div class="modal" id="modalSettings" aria-hidden="true">
+  <div class="modal-card">
+    <header class="modal-head">
+      <h3>设置</h3>
+      <button class="icon-btn" data-close="" aria-label="关闭">×</button>
+    </header>
+    <div class="modal-body">
+      <label class="field">
+        <span class="field-label">API 密钥</span>
+        <input id="setKey" type="text" class="key-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="sk-••••••••••••••••">
+      </label>
+      <div class="key-row" style="margin-top:-6px">
+        <button type="button" class="btn tiny ghost" id="btnVerifySet">验证密钥</button>
+        <span class="key-status" id="setKeyStatus" role="status" aria-live="polite">还没有验证</span>
+      </div>
+      <label class="field">
+        <span class="field-label">Base URL</span>
+        <input id="setBase" type="text" spellcheck="false">
+      </label>
+      <label class="field">
+        <span class="field-label">模型</span>
+        <select id="setModel">
+          <option value="deepseek-chat">deepseek-chat</option>
+          <option value="deepseek-reasoner">deepseek-reasoner</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="field-label">温度 · <b id="tempVal">1.0</b></span>
+        <input id="setTemp" type="range" min="0.4" max="1.4" step="0.1" value="1">
+      </label>
+      <div class="field">
+        <span class="field-label">正文字号</span>
+        <div class="seg" id="fontSeg">
+          <button type="button" data-fs="s">小</button>
+          <button type="button" data-fs="m">中</button>
+          <button type="button" data-fs="l">大</button>
+        </div>
+      </div>
+
+      <label class="check"><input type="checkbox" id="setDeltas" checked><span>显示数值变化</span></label>
+      <label class="check"><input type="checkbox" id="setDemo"><span>离线演示模式（不调用 API，用本地模拟文本）</span></label>
+      <p class="hint" id="usageHint"></p>
+
+      <hr>
+      <div class="row">
+        <button class="btn ghost" id="btnExport" type="button">导出存档</button>
+        <button class="btn ghost" id="btnImport" type="button">导入存档</button>
+        <input type="file" id="fileImport" accept="application/json,.json" hidden>
+      </div>
+      <button class="btn danger" id="btnRestart" type="button">放弃这一局，重新开始</button>
+
+      <details class="adv">
+        <summary>浏览器拦了跨域请求怎么办？</summary>
+        <div class="adv-grid" style="gap:8px">
+          <p class="hint">先把页面下载到本地双击打开试试。如果仍不行，可以自己搭一个转发层，把下面的代码贴到 Cloudflare Workers 里，发布后把它的地址填到上面的 Base URL：</p>
+          <pre class="code">export default {
+  async fetch(req) {
+    const cors = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS"
+    };
+    if (req.method === "OPTIONS") return new Response(null, { headers: cors });
+    const r = await fetch("https://api.deepseek.com" + new URL(req.url).pathname, {
+      method: req.method,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": req.headers.get("Authorization") || ""
+      },
+      body: req.body
+    });
+    return new Response(r.body, { status: r.status, headers: { ...cors, "Content-Type": "application/json" } });
+  }
+}</pre>
+          <p class="hint">转发层会经手你的密钥，只在自己搭的地址上用。</p>
+        </div>
+      </details>
+
+      <hr>
+      <div class="author compact">
+        <div class="author-top">
+          <span class="author-label">作者</span>
+          <span class="author-note">想加剧情 / 报错，直接找我</span>
+        </div>
+        <button type="button" class="author-row" data-copy="58915573475">
+          <span class="author-kind">抖音</span>
+          <span class="author-val">58915573475</span>
+          <span class="author-copy">复制</span>
+        </button>
+        <button type="button" class="author-row" data-copy="3494639277">
+          <span class="author-kind">QQ</span>
+          <span class="author-val">3494639277</span>
+          <span class="author-copy">复制</span>
+        </button>
+      </div>
+
+      <p class="hint">本作不含任何人物立绘。所有人物由文字构成。</p>
+    </div>
+    <footer class="modal-foot"><button class="btn primary" data-close="" type="button">完成</button></footer>
+  </div>
+</div>
+
+<div class="backdrop" id="backdrop"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   presets.js — 工具函数、世界观预设、人物卡、暗线
+   ============================================================ */
+(function (window) {
+  var NC = window.NC || (window.NC = {});
+
+  /* ---------- 小工具 ---------- */
+  NC.clamp = function (v, a, b) { return Math.min(b, Math.max(a, v)); };
+  NC.num = function (v, d) { var n = Number(v); return isFinite(n) ? n : d; };
+  NC.hhmm = function (m) {
+    m = ((Math.round(m) % 1440) + 1440) % 1440;
+    var h = Math.floor(m / 60), mi = m % 60;
+    return (h < 10 ? '0' : '') + h + ':' + (mi < 10 ? '0' : '') + mi;
+  };
+  NC.weekday = function (day) {
+    return ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][(day - 1) % 7];
+  };
+  NC.esc = function (s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  };
+  NC.stageOf = function (h) {
+    if (h.trust < 14 && h.affection > 28) return '裂痕';
+    if (h.affection >= 84 && h.trust >= 55) return '恋人';
+    if (h.affection >= 66) return '心动';
+    if (h.affection >= 48) return '暧昧';
+    if (h.affection >= 26) return '朋友';
+    if (h.affection >= 8) return '眼熟';
+    return '陌生';
+  };
+  NC.stageHint = function (s) {
+    return ({
+      '陌生': '她还没把你放进来。',
+      '眼熟': '她记得你的脸，仅此而已。',
+      '朋友': '可以一起吃顿饭的关系。',
+      '暧昧': '有些话还没说，但空气知道。',
+      '心动': '她在克制一件很明显的事。',
+      '恋人': '你们之间有名字了。',
+      '裂痕': '有些东西正在漏气，而且你知道。'
+    })[s] || '';
+  };
+  NC.riskLabel = function (v) {
+    if (v >= 78) return '一触即发';
+    if (v >= 52) return '危险';
+    if (v >= 26) return '微妙';
+    if (v >= 8) return '有点风';
+    return '平静';
+  };
+
+  /* ---------- 预设世界 ----------
+     threads 是「暗线」：不给玩家看，按节奏喂给模型，
+     让故事往前走，而不是每回合都在原地打转。
+     heroines[].arc 是这个人自己的三段式变化，供模型参考。 */
+  NC.PRESETS = [
+    {
+      id: 'radio',
+      title: '深夜电台',
+      en: 'MIDNIGHT SIGNAL',
+      tagline: '凌晨一点四十，这座城市只剩两种人：睡不着的，和不敢睡的。',
+      premise: '你在一家快要被裁撤的城市电台做后期，节目凌晨两点播出。主播的声音会从隔音门缝里漏出来，比耳机里听到的更轻。白天你在补觉，晚上你在走廊里遇见各种同样醒着的人。城市在下小雨，没人带伞。台里传闻夜间档月底就要停。',
+      weather: '小雨',
+      startLocation: '电台 · 十二楼走廊',
+      startMinutes: 100,
+      money: 1400,
+      locations: ['直播间', '电台走廊', '天台', '24小时便利店', '自动洗衣房', '楼下小吃摊', '河边', '老城区出租屋'],
+      suggestions: ['推门进直播间', '把凉掉的咖啡扔掉', '去楼下买点热的'],
+      opening: '凌晨一点四十。十二楼只剩走廊的应急灯，和直播间门缝下那条白线。\n\n隔音门没关严，林知夏的声音从里面漏出来——她在念一个听众的留言，念到一半停了半秒，才继续。那半秒比整段话都长。\n\n自动贩卖机在走廊尽头嗡嗡作响。你手里的咖啡已经凉了。\n\n台里上个月换了新总监。通告栏上那张纸被人撕掉了一半，剩下的部分写着「夜间档」三个字。',
+      threads: [
+        '台里已经定了，月底停掉夜间档。文件在苏黎的抽屉里，她还没告诉林知夏。',
+        '林知夏收到一个没有署名的点歌请求，点的是她自己多年前最爱的那首。',
+        '周小满的插画本被店长翻到，当成笑话在群里传了一圈。她第二天照常来上班。',
+        '苏黎的前夫出现在电台楼下，说只是路过。她没让你送她下去。',
+        '暴雨夜停电，直播间只剩下应急灯和一台靠电池撑着的调音台。',
+        '台里要你和苏黎去邻市出差两天，为一笔赞助。房间只剩一间。',
+        '林知夏在直播里念了一条不存在的留言，念完自己愣了三秒。',
+        '月底最后一期节目，台里只留一个人做收尾。'
+      ],
+      heroines: [
+        {
+          id: 'zhixia', name: '林知夏', role: '电台主播 · 27', color: '#e08e9f',
+          tags: ['低哑的声线', '怕黑', '话只说一半'],
+          secret: '她的点歌环节其实一直在等一个再也不会打来的人。',
+          arc: '表面从容 → 被戳中时沉默 → 承认自己一直在等',
+          affection: 12, trust: 6, tension: 16, mood: '从容'
+        },
+        {
+          id: 'xiaoman', name: '周小满', role: '便利店夜班 · 22', color: '#f0a86d',
+          tags: ['话很多', '记性好得吓人', '在偷偷画画'],
+          secret: '她在做一本插画集，怕被人当成玩笑。',
+          arc: '开朗挡箭 → 被认真对待后慌 → 愿意给人看第一页',
+          affection: 8, trust: 11, tension: 7, mood: '兴致很高'
+        },
+        {
+          id: 'suli', name: '苏黎', role: '电台商务 · 31', color: '#7cc4b1',
+          tags: ['冷静锋利', '滴酒不沾', '从不解释'],
+          secret: '她刚办完离婚，台里没人知道，裁员名单是她做的。',
+          arc: '公事公办 → 露出破绽 → 说出自己也在名单考虑里',
+          affection: 4, trust: 4, tension: 10, mood: '疲惫'
+        }
+      ]
+    },
+    {
+      id: 'flat',
+      title: '三人合租',
+      en: 'SHARED WALLS',
+      tagline: '顶楼的老房子把整个夏天都关在里面，空调刚好坏了。',
+      premise: '你搬进一套老小区顶楼的三室一厅，和两个女生合租。房东是她叔叔。客厅很小，冰箱更小，阳台晾着别人的衣服。夏天还剩四十天，空调外机在窗台上咳了两声，彻底不转了。楼下的租客在装修，电钻每天早上八点准时响。',
+      weather: '闷热',
+      startLocation: '公寓 · 客厅',
+      startMinutes: 17 * 60 + 20,
+      money: 2600,
+      locations: ['客厅', '厨房', '阳台', '楼下便利店', '小区天台', '地铁站', '夜市', '旧货市场'],
+      suggestions: ['先把纸箱拆了', '下楼买瓶气泡水', '敲敲隔壁的门'],
+      opening: '搬家第一天，纸箱堆到玄关。\n\n顶楼把整个夏天的热气都存了起来，空调外机在窗台上咳了两声，然后彻底安静。你站在客厅中央，汗从后背往下走。\n\n冰箱里只剩半瓶气泡水，瓶身上贴着一张便利贴：『谁喝谁买。』字很好看。\n\n玄关的门响了。',
+      threads: [
+        '房东打电话来催房贷，江月躲进阳台接，声音压得很低。',
+        '陈妤的准考证还压在书里，她今年其实没报名。',
+        '白露那卷没洗的胶卷被送错了快递，落到你手里。',
+        '楼上漏水，天花板洇出一片印子，要有人上去谈。',
+        '停电的那个晚上，四个人在客厅点着蜡烛吃西瓜。',
+        '江月的叔叔突然上门，说要把房子卖掉。',
+        '陈妤收拾行李准备回老家，车票买在下周一。',
+        '白露要搬走，说想拍完最后一组照片再走。'
+      ],
+      heroines: [
+        {
+          id: 'jiangyue', name: '江月', role: '房东的侄女 · 25', color: '#f0a86d',
+          tags: ['嘴硬', '会做饭', '起得很早'],
+          secret: '她在替叔叔还房贷，压力大到夜里会一个人坐在阳台上。',
+          arc: '挑刺设界线 → 被分担后松动 → 承认自己撑不住了',
+          affection: 10, trust: 9, tension: 12, mood: '防备'
+        },
+        {
+          id: 'chenyu', name: '陈妤', role: '二战考研 · 23', color: '#a89be6',
+          tags: ['安静', '养了一只猫', '夜里不睡'],
+          secret: '她今年根本不想考，但不敢告诉家里。',
+          arc: '沉默顺从 → 第一次说不 → 讲出自己真正想做的事',
+          affection: 6, trust: 6, tension: 6, mood: '恍惚'
+        },
+        {
+          id: 'bailu', name: '白露', role: '自由摄影师 · 28', color: '#e08e9f',
+          tags: ['直球', '常不在家', '讨厌被安排'],
+          secret: '她有一卷一直没洗的胶卷，里面全是同一个人。',
+          arc: '像风一样来去 → 被留下一次 → 承认自己怕的是留下',
+          affection: 5, trust: 5, tension: 14, mood: '懒散'
+        }
+      ]
+    },
+    {
+      id: 'summer',
+      title: '未完成的夏天',
+      en: 'LATE SUMMER',
+      tagline: '你回来处理外婆的房子，暑期末尾，海风带着铁锈味。',
+      premise: '你回到海边的小城，处理外婆留下的老房子。这里离你上一次离开已经七年。码头在修，唱片店要关门，婚礼季还没结束。所有人都在等一场台风。外婆的房子里还留着她没写完的信。',
+      weather: '晴，有风',
+      startLocation: '坡下 · 唱片店门口',
+      startMinutes: 16 * 60 + 10,
+      money: 1800,
+      locations: ['外婆的老房子', '唱片店', '修船厂', '海边堤坝', '码头', '镇上小酒馆', '公交站', '旧影院'],
+      suggestions: ['先去老房子看看', '走进那家唱片店', '在堤坝上坐一会儿'],
+      opening: '高铁到站时是下午四点，海风把站台的铁锈味吹进车厢。\n\n小城比你记得的更旧，也更安静。坡上的房子还在，钥匙在你口袋里，重得像块石头。\n\n坡下那家唱片店卷帘门拉着一半，里面有人在放一首你没听过的歌。风把门口的塑料帘子吹得啪啪响。\n\n台风预警是今天早上发的。街上有人在钉窗户。',
+      threads: [
+        '外婆的抽屉里有一封没寄出的信，收信人的名字被水泡糊了。',
+        '唱片店下个月关门，沈昭在清库存，一张一张擦。',
+        '温柚的爸爸要把修船厂盘出去，她还没同意。',
+        '何遇要在这座城拍最后一场婚礼，新郎是她前任。',
+        '台风提前登陆，全城停电，所有人都被困在能躲雨的地方。',
+        '房子有人来看过，出价很低，中介说这是最后的机会。',
+        '沈昭把店里最后一台唱机留给了你，什么也没说。',
+        '离开的班车只有早上六点半一班。'
+      ],
+      heroines: [
+        {
+          id: 'shenzhao', name: '沈昭', role: '唱片店老板 · 29', color: '#7cc4b1',
+          tags: ['话少', '耳朵很好', '旧东西不扔'],
+          secret: '店下个月就要关门了，她谁也没说。',
+          arc: '安静地守着 → 被问起时回避 → 承认自己也害怕结束',
+          affection: 14, trust: 8, tension: 10, mood: '平静'
+        },
+        {
+          id: 'wenyou', name: '温柚', role: '修船厂老板的女儿 · 20', color: '#f0a86d',
+          tags: ['会开摩托', '手上有油', '笑得很响'],
+          secret: '她想离开这座城，又放不下她爸。',
+          arc: '吵闹地靠近 → 露出犹豫 → 做出自己的选择',
+          affection: 6, trust: 7, tension: 8, mood: '好奇'
+        },
+        {
+          id: 'heyu', name: '何遇', role: '婚礼摄影师 · 29', color: '#e08e9f',
+          tags: ['说话温柔', '拍过很多场婚礼', '不参加自己的'],
+          secret: '她早就不相信婚礼了，只是还没想好怎么承认。',
+          arc: '职业性的温柔 → 镜头后的疲惫 → 放下相机',
+          affection: 4, trust: 4, tension: 12, mood: '客气'
+        }
+      ]
+    },
+    {
+      id: 'metro',
+      title: '末班地铁',
+      en: 'LAST TRAIN',
+      tagline: '23:47，站台只剩最后一班。你每天都在这个时间回家。',
+      premise: '你在一家离住处一小时地铁的公司上班，每天赶末班车。城市在地底下呼吸，站台的风比地面凉。这个点还在外面的人，彼此都有一点默契：不看对方的眼睛。你开始认得几张脸。',
+      weather: '阴',
+      startLocation: '地铁站 · 换乘通道',
+      startMinutes: 23 * 60 + 47,
+      money: 3200,
+      locations: ['换乘通道', '站台', '末班车厢', '便利店', '公司格子间', '出站口的小广场', '24小时澡堂', '天桥'],
+      suggestions: ['在长椅上坐下等车', '去便利店买点吃的', '看一眼那个每天都遇到的人'],
+      opening: '23:47。换乘通道的灯有一半是坏的，走过去像穿过一段一段的黑暗。\n\n末班车的广播已经念到第三遍，声音被地下的空气压得很平。你刷卡进站，风从隧道里涌上来，带着铁和灰的味道。\n\n站台上站着三个人。你已经连着两周在同一节车厢看见她们。\n\n没有人抬头。',
+      threads: [
+        '末班车要改成 23:30 发车，之后只有一班。有人的下班时间刚好卡在那里。',
+        '宋元在收拾一个没人认领的行李箱，已经放了三天。',
+        '车厢里那个画速写的人，本子最后一页画的是一个空座位。',
+        '暴雨倒灌，站台临时封闭，所有人被留在通道里两个小时。',
+        '公司裁员名单下来了，你的工位在名单边缘。',
+        '有人在地铁口贴寻人启事，照片上的女孩有点眼熟。',
+        '末班车司机认出了你，说了一句你听不懂的话。',
+        '最后一班车停运的那晚，站台只剩你们两个人。'
+      ],
+      heroines: [
+        {
+          id: 'songyuan', name: '宋元', role: '地铁站务员 · 26', color: '#7cc4b1',
+          tags: ['记性好', '值夜班', '说话像播报'],
+          secret: '那个无人认领的行李箱，她其实知道是谁的。',
+          arc: '程序化的礼貌 → 破例多说一句 → 把不该说的事说出来',
+          affection: 9, trust: 10, tension: 8, mood: '清醒'
+        },
+        {
+          id: 'linwan', name: '林晚', role: '钢琴陪练 · 24', color: '#a89be6',
+          tags: ['总在打瞌睡', '耳机漏音', '手很白'],
+          secret: '她每天多坐两站，只是不想那么早回那个空房子。',
+          arc: '疲惫到透明 → 被注意到 → 承认自己在躲什么',
+          affection: 6, trust: 6, tension: 9, mood: '困'
+        },
+        {
+          id: 'qin', name: '秦昭', role: '地铁司机 · 30', color: '#f0a86d',
+          tags: ['只穿深色', '不聊天', '记得每一站的风'],
+          secret: '她开末班车三年，从没在终点站下过车。',
+          arc: '隔着驾驶室的门 → 一次对视 → 停下来走出那扇门',
+          affection: 3, trust: 5, tension: 13, mood: '沉默'
+        }
+      ]
+    },
+    {
+      id: 'reunion',
+      title: '十年同学会',
+      en: 'TEN YEARS LATER',
+      tagline: '十年没见的人坐在同一张桌子上，敬酒时都在偷偷打量谁混得更好。',
+      premise: '高中毕业十年，班长在群里发起了同学会。你本来不想来。饭局订在老城区一家开了二十年的馆子，二楼包间，十个圆桌，墙上还挂着当年的合影。所有人都在演一个更成功的自己。',
+      weather: '夜，微凉',
+      startLocation: '老馆子 · 二楼走廊',
+      startMinutes: 19 * 60 + 40,
+      money: 900,
+      locations: ['二楼包间', '饭店走廊', '饭店门口', '后巷', 'KTV', '母校操场', '便利店', '江边'],
+      suggestions: ['推门进去', '先在走廊站一会儿', '去门口抽根烟'],
+      opening: '包间的门虚掩着，里面已经很吵。有人在高声讲一个所有人都听过的段子，笑声整齐得像排练过。\n\n你在走廊站了两分钟，玻璃门上映出一个不太确定的自己。\n\n服务员端着两盘菜从你身边挤过去，门开了一下，热气扑出来。\n\n有人喊了你的名字。',
+      threads: [
+        '班长把这次聚会的账算错了，多出来的钱谁都不肯认。',
+        '有人在群里翻出十年前的合照，照片里少了一个人。',
+        '她当年没说完的那句话，今晚又被别人提起来。',
+        '散场后有人提议去母校，操场没锁门。',
+        '有人在洗手间哭了半小时，出来补了妆说没事。',
+        '当年的班主任住院了，大家临时决定凑钱去看。',
+        '有人把你拉到后巷，说了一件十年前的事。',
+        '凌晨两点，包间只剩三个人和一桌冷菜。'
+      ],
+      heroines: [
+        {
+          id: 'wenjing', name: '温静', role: '高中班长 · 律师 · 28', color: '#e08e9f',
+          tags: ['面面俱到', '记得每个人', '永远最后一个走'],
+          secret: '她张罗这场聚会，只是想再见一个人。',
+          arc: '掌控全场 → 被人看穿 → 承认自己也过得不好',
+          affection: 11, trust: 8, tension: 12, mood: '得体'
+        },
+        {
+          id: 'shu', name: '舒念', role: '花店老板 · 28', color: '#7cc4b1',
+          tags: ['安静', '坐在角落', '手上的刺'],
+          secret: '她当年写过一封信，没敢递出去。',
+          arc: '客气地躲 → 被单独叫住 → 把信的事说出来',
+          affection: 7, trust: 7, tension: 10, mood: '拘谨'
+        },
+        {
+          id: 'chenmo', name: '陈默', role: '乐队吉他手 · 29', color: '#f0a86d',
+          tags: ['话很少', '一直在弹别人的歌', '头发长回来了'],
+          secret: '她十年前没参加高考，这件事全桌只有你不知道。',
+          arc: '玩笑挡回去 → 醉后说实话 → 承认后悔与不后悔',
+          affection: 5, trust: 5, tension: 14, mood: '松垮'
+        }
+      ]
+    },
+    {
+      id: 'custom',
+      title: '自定义',
+      en: 'YOUR OWN CITY',
+      tagline: '自己写一个世界。三个名字，一句前提，剩下的交给夜晚。',
+      premise: '',
+      weather: '阴',
+      startLocation: '街角',
+      startMinutes: 21 * 60,
+      money: 2000,
+      locations: ['街角', '住处', '便利店', '地铁', '公园', '天台', '公司'],
+      suggestions: ['四处看看', '找个人说说话', '先回家'],
+      opening: '',
+      threads: [
+        '一件你以为早就过去的事，被人重新提起。',
+        '有人撒了一个小谎，只有你知道。',
+        '一个临时的事件把大家关在了同一个地方。',
+        '有人要离开，时间已经定下来了。',
+        '一个本来不该出现的第三人出现了。',
+        '秘密被摊开了一角，还可以选择说不说。'
+      ],
+      heroines: [
+        { id: 'a', name: '沈青', role: '你的邻居 · 26', color: '#e08e9f', tags: ['不好接近', '偶尔很好心'], secret: '', arc: '保持距离 → 一次例外 → 承认在等人', affection: 8, trust: 6, tension: 10, mood: '平静' },
+        { id: 'b', name: '陆遥', role: '同事 · 28', color: '#f0a86d', tags: ['嘴上不饶人', '做事很稳'], secret: '', arc: '公事公办 → 私下示弱 → 说出真实打算', affection: 6, trust: 8, tension: 8, mood: '疲惫' },
+        { id: 'c', name: '许晚', role: '酒吧驻唱 · 24', color: '#7cc4b1', tags: ['话很少', '唱歌很轻'], secret: '', arc: '隔着舞台 → 下台说话 → 唱一首自己的歌', affection: 4, trust: 5, tension: 12, mood: '疏离' }
+      ]
+    }
+  ];
+
+  NC.presetById = function (id) {
+    for (var i = 0; i < NC.PRESETS.length; i++) if (NC.PRESETS[i].id === id) return NC.PRESETS[i];
+    return NC.PRESETS[0];
+  };
+
+  /* ---------- 新游戏状态 ---------- */
+  NC.newState = function (preset, opts) {
+    opts = opts || {};
+    var names = opts.names || {};
+    var heroines = preset.heroines.map(function (h) {
+      return {
+        id: h.id,
+        name: (names[h.id] || h.name || '').slice(0, 8),
+        role: h.role,
+        color: h.color,
+        tags: h.tags.slice(),
+        secret: h.secret || '',
+        arc: h.arc || '',
+        affection: h.affection,
+        trust: h.trust,
+        tension: h.tension,
+        mood: h.mood,
+        note: '',
+        known: []
+      };
+    });
+
+    var startMin = preset.startMinutes;
+    var stream = [{ t: 'scene', title: preset.title, meta: (preset.en || '') + ' · 第 1 天' }];
+    var opening = opts.opening || preset.opening;
+    if (opening) stream.push({ t: 'narration', text: opening });
+
+    var threads = (preset.threads || []).filter(function (x) { return x && String(x).trim(); });
+
+    return {
+      v: 2,
+      createdAt: Date.now(),
+      presetId: preset.id,
+      settings: opts.settings || {},
+      world: {
+        day: 1,
+        minutes: startMin,
+        location: preset.startLocation,
+        weather: preset.weather,
+        premise: opts.premise || preset.premise,
+        locations: preset.locations.slice(),
+        title: preset.title
+      },
+      player: { name: opts.playerName || '你', energy: 78, money: preset.money || 2000, charm: 5 },
+      heroines: heroines,
+      risk: 0,
+      turn: 0,
+      ended: null,
+      threads: { list: threads, i: 0 },
+      chronicle: [{ day: 1, time: NC.hhmm(startMin), text: '故事开始了。' }],
+      recent: [],
+      stream: stream,
+      suggestions: preset.suggestions.slice()
+    };
+  };
+
+  /* 下一段暗线（每次只给模型一条，避免它一口气把悬念用完） */
+  NC.nextThread = function (state) {
+    var t = state.threads;
+    if (!t || !t.list || !t.list.length) return '';
+    var i = Math.min(t.i || 0, t.list.length - 1);
+    return t.list[i] || '';
+  };
+  NC.threadProgress = function (state) {
+    var t = state.threads;
+    if (!t || !t.list || !t.list.length) return { done: 0, total: 0 };
+    return { done: Math.min(t.i || 0, t.list.length), total: t.list.length };
+  };
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script>
+/* ============================================================
+   api.js — 提示词构建、DeepSeek 调用、结果解析、离线演示引擎
+   ============================================================ */
+(function (window) {
+  var NC = window.NC || (window.NC = {});
+
+  var TONE = {
+    restrained: '文风克制、留白多，像午夜电台。句子短，情绪藏在动作和物件里，不解释。',
+    light: '文风轻快、有生活气和小幽默，节奏明快，对话多过描写。',
+    intense: '文风浓烈，感官细节密集：温度、气味、距离、呼吸。但始终克制在“差一点”的位置。',
+    dry: '文风冷幽默、略带自嘲，人物说话带刺但不下作，苦中作乐。'
+  };
+  var HEAT = {
+    subtle: '亲密停留在错开的视线、递东西时碰到的手指、一句话后的沉默。不写拥抱以上的身体接触。',
+    warm: '可以写到贴近、牵手、拥抱、额头相触、克制的亲吻，之后用留白收束。',
+    close: '气氛和暗示可以推到很近的位置，但一切以留白、转场、意象收尾，不写具体过程。'
+  };
+
+  NC.TONE = TONE;
+  NC.HEAT = HEAT;
+
+  /* ---------------- 密钥 / 地址清洗 ---------------- */
+  /* 复制密钥时经常带上引号、反引号、Bearer 前缀、零宽字符或换行，
+     这些都会让请求头变成脏值，服务端直接 401。统一在这里清掉。 */
+  NC.normalizeKey = function (raw) {
+    var s = String(raw == null ? '' : raw);
+    s = s.replace(/[\u200B-\u200D\uFEFF\u00A0\u2028\u2029]/g, ' ');
+    s = s.trim();
+    for (var i = 0; i < 3; i++) {
+      s = s.replace(/^[\s"'`“”‘’]+/, '').replace(/[\s"'`“”‘’。，、；：！？]+$/, '');
+      s = s.replace(/^bearer\s+/i, '').replace(/^authorization\s*[:：]\s*/i, '');
+    }
+    s = s.replace(/\s+/g, '');
+    return s;
+  };
+
+  NC.normalizeBase = function (raw) {
+    var s = String(raw == null ? '' : raw).trim();
+    s = s.replace(/^[\s"'`]+/, '').replace(/[\s"'`]+$/, '');
+    if (!s) return 'https://api.deepseek.com';
+    if (!/^https?:\/\//i.test(s)) s = 'https://' + s;
+    s = s.replace(/\/+$/, '');
+    s = s.replace(/\/chat\/completions$/i, '');
+    return s;
+  };
+
+  NC.keyLooksOk = function (k) {
+    return /^[A-Za-z0-9._\-]{12,200}$/.test(k);
+  };
+
+  /* ---------------- 密钥探测 ---------------- */
+  /* 返回 {state:'ok'|'badkey'|'nobalance'|'limited'|'badurl'|'net'|'error', text, detail} */
+  NC.probeKey = function (key, base, model) {
+    key = NC.normalizeKey(key);
+    base = NC.normalizeBase(base);
+    model = model || 'deepseek-chat';
+    if (!key) return Promise.resolve({ state: 'error', text: '还没有填密钥。' });
+    if (!NC.keyLooksOk(key)) return Promise.resolve({ state: 'error', text: '密钥里有不该出现的字符（空格、中文标点或换行）。' });
+    if (typeof fetch !== 'function') return Promise.resolve({ state: 'error', text: '当前环境不支持网络请求。' });
+
+    function judge(res, txt) {
+      if (res.ok) return { state: 'ok', text: '密钥可用，已连通 ' + base, detail: '' };
+      var extra = '';
+      try { var j = JSON.parse(txt); if (j && j.error && j.error.message) extra = ' · ' + j.error.message; } catch (e) { }
+      if (res.status === 401) return { state: 'badkey', text: '密钥无效（401）。可能已被撤销、复制不全或不是 DeepSeek 的密钥。', detail: extra };
+      if (res.status === 402) return { state: 'nobalance', text: '密钥有效，但账户余额不足（402）。', detail: extra };
+      if (res.status === 403) return { state: 'badkey', text: '密钥没有访问权限（403）。', detail: extra };
+      if (res.status === 404) return { state: 'badurl', text: '接口地址不对（404），检查 Base URL。', detail: extra };
+      if (res.status === 429) return { state: 'limited', text: '密钥有效，但请求太频繁或额度用尽（429）。', detail: extra };
+      if (res.status >= 500) return { state: 'limited', text: 'DeepSeek 服务端错误（' + res.status + '），密钥本身没问题。', detail: extra };
+      return { state: 'error', text: '返回了意外状态码 ' + res.status + '。', detail: extra };
+    }
+
+    function netFail(e) {
+      return {
+        state: 'net',
+        text: '连不上接口。这不是密钥的问题，多半是跨域或网络。',
+        detail: NC.networkMessage(e)
+      };
+    }
+
+    return fetch(base + '/models', {
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer ' + key }
+    }).then(function (res) {
+      if (res.status === 404 || res.status === 405) {
+        /* 有些兼容网关没有 /models，用一次最小对话兜底 */
+        return fetch(base + '/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+          body: JSON.stringify({ model: model, messages: [{ role: 'user', content: 'ping' }], max_tokens: 1, stream: false })
+        }).then(function (r2) {
+          return r2.text().then(function (t2) { return judge(r2, t2); });
+        });
+      }
+      return res.text().then(function (t) { return judge(res, t); });
+    }).catch(netFail);
+  };
+
+  /* ---------------- 系统提示词 ---------------- */
+  NC.buildSystem = function (state) {
+    var s = state.settings || {};
+    var w = state.world;
+    var lines = [];
+
+    lines.push('你是「夜航」的叙事引擎。这是一款面向成年玩家的开放式都市恋爱模拟：没有固定剧本，没有唯一正确选项。玩家可以自由行动，世界必须真实地回应。');
+    lines.push('');
+    lines.push('【叙述规则】');
+    lines.push('1. 用第二人称「你」叙述，简体中文，现代都市白话。要有画面感、有气味和声音。禁止网文腔、禁止堆砌形容词、禁止结尾总结升华。');
+    lines.push('2. 每次只推进一小段：10~90 分钟、一个场景、一到两轮对话。不要替玩家做决定，不要写玩家的台词，也不要替玩家下情感结论。可以写「你」的动作带来的体感与外部反应。不要复述玩家刚才说过的话，直接从场景开始。');
+    lines.push('3. 对话必须单独成段，格式：名字：「台词」。例如 林知夏：「你还没走？」。对话要有潜台词，人物不要直白解释自己的情感。场景里有人在场时，至少给出一句对话。');
+    lines.push('4. 正文里不要用 emoji，不要写「（旁白）」之类的标签，不要用 markdown 标题或列表。');
+    lines.push('5. 人物有独立生活：会忙、会累、会拒绝、有你不知道的事。好感高不等于顺从，她永远可以说「不」。');
+    lines.push('6. 玩家做出越界、冒犯、荒谬的行动时，世界要给出真实后果（冷场、翻脸、被拉黑、报警），不要强行圆回来。玩家做与恋爱无关的事（工作、睡觉、打游戏）也照实推进。');
+    lines.push('7. 允许多线并行。若玩家在多条线之间留下破绽，risk 上升，人物会察觉、试探、要一个解释。不要替玩家遮掩。');
+    lines.push('8. 禁止描写任何角色的长相、身材、发型、穿着细节。人物只通过动作、声音、气味、习惯、语速来呈现。这条是硬规则。');
+    lines.push('9. 所有角色均为成年人（22 岁以上），关系基于自愿。');
+    lines.push('10. 可以写暧昧、心动、亲密的氛围与暗示，但不写露骨的性行为描写；需要时用留白、转场、意象收束。不写自伤、未成年、非自愿题材。');
+    lines.push('11. 玩家输入以「//」开头时，是导演指令（OOC）：用来改天气、插入事件、调整气氛。照做，但不要把它写成对玩家说的话。');
+    lines.push('12. 每次正文都从新的画面开始，不要重复上一段的结尾句。如果一个场景已经很充分，就让它结束，换到下一步。');
+    lines.push('');
+    lines.push('【文风】' + (TONE[s.tone] || TONE.restrained));
+    lines.push('【尺度】' + (HEAT[s.heat] || HEAT.warm));
+    lines.push('');
+    lines.push('【世界】' + w.title + '｜' + w.premise);
+    lines.push('地点可用：' + (w.locations || []).join('、') + '。玩家去别的地方也可以，但要合理。');
+    lines.push('');
+    lines.push('【人物】');
+    state.heroines.forEach(function (h) {
+      lines.push('- id:' + h.id + '｜' + h.name + '｜' + h.role + '｜标签：' + h.tags.join('、') +
+        '｜当前心情：' + h.mood +
+        (h.secret ? '｜她没说出口的事（只能通过细节暗示，绝不能直接说破）：' + h.secret : '') +
+        (h.arc ? '｜她的变化方向：' + h.arc : '') +
+        (h.known && h.known.length ? '｜玩家已知：' + h.known.join('；') : ''));
+    });
+    lines.push('主角称呼：' + state.player.name + '。');
+
+    /* 暗线：给故事一个向前的方向，而不是每回合原地打转 */
+    var thread = NC.nextThread ? NC.nextThread(state) : '';
+    if (thread) {
+      lines.push('');
+      lines.push('【下一步可以推进的暗线】' + thread);
+      lines.push('这条暗线是本回合的背景压力或即将发生的事。在合适的时机自然地让它往前推一点（一个消息、一个人出现、一个决定被迫提前），不要每回合都硬推，也不要一次把悬念用完。玩家没碰到它也没关系，让它在背景里继续走。');
+    }
+    lines.push('');
+    lines.push('【数值规则】所有数值都用「增量」小整数，克制，不刷分：');
+    lines.push('- affection 好感 -6~+8：人物越冷淡，同样套路收益越小，重复招式递减。');
+    lines.push('- trust 信任 -8~+6：诚实、守约、保密会涨；说谎被识破会大跌。');
+    lines.push('- tension 张力 -5~+8：暧昧、试探、距离拉近会涨；摊牌或尴尬会回落。');
+    lines.push('- 一次行动通常只影响 1~2 个人物。没出场的角色不要给数值。');
+    lines.push('- risk 修罗场风险 -5~+10；energy 精力、money 金钱均为增量，钱不能凭空变多。');
+    lines.push('');
+    lines.push('【输出】只输出一个 JSON 对象。不要 markdown 代码块，不要任何 JSON 之外的文字。字段如下：');
+    lines.push('{');
+    lines.push('  "scene_title": "不超过 10 字的场景小标题",');
+    lines.push('  "narration": "正文，300~650 字，段落之间用 \\n\\n 分隔；对话单独成段，格式为 名字：「台词」",');
+    lines.push('  "location": "当前地点",');
+    lines.push('  "timeAdvance": 30,');
+    lines.push('  "weather": "小雨",');
+    lines.push('  "player": {"energy": -6, "money": -12, "charm": 0},');
+    lines.push('  "heroines": [{"id": "人物id", "affection": 4, "trust": 1, "tension": 6, "mood": "两个字的情绪", "note": "一句不超过 20 字的观察"}],');
+    lines.push('  "risk": 2,');
+    lines.push('  "log": "一句话记录本回合（不超过 30 字）",');
+    lines.push('  "unlocks": [{"heroine": "人物id", "text": "玩家这回合新知道的一件事"}],');
+    lines.push('  "suggestions": ["下一步可能想做的事", "短句", "不超过 12 字"],');
+    lines.push('  "ending": null');
+    lines.push('}');
+    lines.push('ending 非空时表示这一段有了收束，格式 {"title":"四到六字","text":"200 字以内的收尾"}。只有当玩家明确走到一个无法继续的节点（告白成功、彻底决裂、离开这座城市）才使用，不要滥用。');
+    lines.push('再次强调：只输出 JSON。');
+
+    return lines.join('\n');
+  };
+
+  /* ---------------- 单回合用户消息 ---------------- */
+  NC.buildUser = function (state, action) {
+    var w = state.world;
+    var snap = {
+      d: w.day,
+      t: NC.hhmm(w.minutes),
+      loc: w.location,
+      weather: w.weather,
+      energy: Math.round(state.player.energy),
+      money: Math.round(state.player.money),
+      risk: Math.round(state.risk),
+      cast: state.heroines.map(function (h) {
+        return {
+          id: h.id, name: h.name,
+          aff: Math.round(h.affection), tru: Math.round(h.trust), ten: Math.round(h.tension),
+          mood: h.mood, stage: NC.stageOf(h), note: h.note || ''
+        };
+      })
+    };
+
+    var parts = [];
+    parts.push('【当前状态】' + JSON.stringify(snap));
+    if (state.chronicle.length) {
+      parts.push('【编年史】');
+      parts.push(state.chronicle.slice(-14).map(function (c) {
+        return '第' + c.day + '天 ' + c.time + ' · ' + c.text;
+      }).join('\n'));
+    }
+    if (state.recent && state.recent.length) {
+      parts.push('【最近场景片段】');
+      parts.push(state.recent.slice(-2).map(function (r) {
+        return '—— ' + String(r).slice(0, 240);
+      }).join('\n'));
+    }
+    if (state.player.energy <= 12) parts.push('【提示】玩家已经非常疲惫，描写里要体现这一点。');
+    parts.push('【玩家行动】' + action);
+    parts.push('请以 JSON 输出这一回合。');
+    return parts.join('\n\n');
+  };
+
+  /* ---------------- 调用 DeepSeek ---------------- */
+  NC.callDeepSeek = function (state, action, opts) {
+    opts = opts || {};
+    var s = state.settings || {};
+    var key = NC.normalizeKey(s.apiKey);
+    if (!key) return Promise.reject(new Error('NO_KEY'));
+    if (typeof fetch !== 'function') {
+      return Promise.reject(new Error('这个环境不支持网络请求。请把这个 HTML 文件下载下来，用浏览器打开。'));
+    }
+
+    var base = NC.normalizeBase(s.baseUrl);
+    var url = base + '/chat/completions';
+    var model = s.model || 'deepseek-chat';
+
+    var body = {
+      model: model,
+      messages: [
+        { role: 'system', content: NC.buildSystem(state) },
+        { role: 'user', content: NC.buildUser(state, action) }
+      ],
+      stream: false,
+      max_tokens: 1800
+    };
+    if (model.indexOf('reasoner') === -1) {
+      body.temperature = typeof s.temperature === 'number' ? s.temperature : 1.0;
+      body.response_format = { type: 'json_object' };
+    }
+
+    var attempt = 0;
+    function run() {
+      attempt++;
+      return fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + key
+        },
+        body: JSON.stringify(body),
+        signal: opts.signal
+      }).then(function (res) {
+        if (!res.ok) {
+          return res.text().then(function (txt) {
+            var err = new Error(httpMessage(res.status, txt));
+            err.status = res.status;
+            err.body = txt;
+            throw err;
+          });
+        }
+        return res.json();
+      }).then(function (data) {
+        var msg = data && data.choices && data.choices[0] && data.choices[0].message;
+        var content = msg ? (msg.content || '') : '';
+        if (!content) throw new Error('模型没有返回内容（可能被截断），请重试。');
+        if (data.usage) {
+          state.usage = state.usage || { prompt: 0, completion: 0 };
+          state.usage.prompt += data.usage.prompt_tokens || 0;
+          state.usage.completion += data.usage.completion_tokens || 0;
+        }
+        return content;
+      }).catch(function (e) {
+        if (e && (e.status === 429 || e.status >= 500) && attempt < 2) {
+          return new Promise(function (r) { setTimeout(r, 1200); }).then(run);
+        }
+        throw e;
+      });
+    }
+    return run();
+  };
+
+  function httpMessage(status, txt) {
+    var base;
+    if (status === 401) base = '密钥无效（401）。检查是否复制完整，或前端多了空格。';
+    else if (status === 402) base = '账户余额不足（402）。请到 DeepSeek 控制台充值。';
+    else if (status === 403) base = '没有访问权限（403）。';
+    else if (status === 404) base = '接口地址不对（404）。Base URL 一般填 https://api.deepseek.com';
+    else if (status === 422) base = '请求参数有误（422）。';
+    else if (status === 429) base = '请求太频繁或额度用尽（429），稍等一下再试。';
+    else if (status >= 500) base = 'DeepSeek 服务端出错（' + status + '），稍后重试。';
+    else base = '请求失败（' + status + '）。';
+    var extra = '';
+    try {
+      var j = JSON.parse(txt);
+      if (j && j.error && j.error.message) extra = ' · ' + j.error.message;
+    } catch (e) { /* ignore */ }
+    return base + extra;
+  }
+
+  NC.networkMessage = function (e) {
+    if (!e) return '未知错误。';
+    if (e.name === 'AbortError') return '已取消。';
+    if (e instanceof TypeError || /Failed to fetch|NetworkError|Load failed/i.test(e.message || '')) {
+      return '连不上接口。可能是网络问题，或浏览器拦了跨域请求。\n解决办法：把这个网页下载到本地，双击用浏览器打开；或部署到任意静态站点后再访问。';
+    }
+    return e.message || String(e);
+  };
+
+  /* ---------------- 解析 ---------------- */
+  NC.parseJson = function (text) {
+    var t = String(text || '').trim();
+    t = t.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+    try { return JSON.parse(t); } catch (e) { }
+    var start = t.indexOf('{');
+    if (start >= 0) {
+      var depth = 0, inStr = false, esc = false;
+      for (var i = start; i < t.length; i++) {
+        var ch = t[i];
+        if (inStr) {
+          if (esc) esc = false;
+          else if (ch === '\\') esc = true;
+          else if (ch === '"') inStr = false;
+          continue;
+        }
+        if (ch === '"') inStr = true;
+        else if (ch === '{') depth++;
+        else if (ch === '}') {
+          depth--;
+          if (depth === 0) {
+            try { return JSON.parse(t.slice(start, i + 1)); } catch (e2) { return null; }
+          }
+        }
+      }
+    }
+    return null;
+  };
+
+  NC.normalize = function (obj, state) {
+    if (!obj || typeof obj !== 'object') return null;
+    var narration = obj.narration || obj.text || obj.story || '';
+    if (typeof narration !== 'string') narration = '';
+    narration = narration.trim();
+    if (!narration) return null;
+
+    var p = obj.player || {};
+    var out = {
+      sceneTitle: String(obj.scene_title || obj.sceneTitle || obj.title || '').slice(0, 24),
+      narration: narration,
+      location: typeof obj.location === 'string' ? obj.location.slice(0, 24) : '',
+      timeAdvance: NC.clamp(Math.round(NC.num(obj.timeAdvance != null ? obj.timeAdvance : obj.time_advance, 25)), 0, 120),
+      weather: typeof obj.weather === 'string' ? obj.weather.slice(0, 12) : '',
+      player: {
+        energy: NC.clamp(Math.round(NC.num(p.energy, 0)), -50, 50),
+        money: NC.clamp(Math.round(NC.num(p.money, 0)), -5000, 5000),
+        charm: NC.clamp(Math.round(NC.num(p.charm, 0)), -3, 3)
+      },
+      heroines: [],
+      risk: NC.clamp(Math.round(NC.num(obj.risk, 0)), -10, 15),
+      log: String(obj.log || '').slice(0, 60),
+      unlocks: [],
+      suggestions: [],
+      ending: null
+    };
+
+    var arr = Array.isArray(obj.heroines) ? obj.heroines : (Array.isArray(obj.characters) ? obj.characters : []);
+    arr.forEach(function (hu) {
+      if (!hu || typeof hu !== 'object') return;
+      var id = hu.id || hu.heroine || hu.who || '';
+      var name = hu.name || '';
+      var target = null;
+      state.heroines.forEach(function (h) {
+        if (!target && ((id && h.id === id) || (name && h.name === name))) target = h;
+      });
+      if (!target && name) {
+        state.heroines.forEach(function (h) {
+          if (!target && (name.indexOf(h.name) >= 0 || h.name.indexOf(name) >= 0)) target = h;
+        });
+      }
+      if (!target) return;
+      out.heroines.push({
+        id: target.id,
+        affection: NC.clamp(Math.round(NC.num(hu.affection != null ? hu.affection : hu.aff, 0)), -12, 14),
+        trust: NC.clamp(Math.round(NC.num(hu.trust != null ? hu.trust : hu.tru, 0)), -14, 12),
+        tension: NC.clamp(Math.round(NC.num(hu.tension != null ? hu.tension : hu.ten, 0)), -12, 14),
+        mood: typeof hu.mood === 'string' ? hu.mood.slice(0, 8) : '',
+        note: typeof hu.note === 'string' ? hu.note.slice(0, 40) : ''
+      });
+    });
+
+    (Array.isArray(obj.unlocks) ? obj.unlocks : []).forEach(function (u) {
+      if (!u || typeof u !== 'object') return;
+      var id = u.heroine || u.id || u.who || '';
+      var h = null;
+      state.heroines.forEach(function (x) { if (!h && x.id === id) h = x; });
+      if (!h) {
+        var nm = u.name || '';
+        state.heroines.forEach(function (x) { if (!h && nm && x.name === nm) h = x; });
+      }
+      var txt = String(u.text || '').slice(0, 50);
+      if (h && txt) out.unlocks.push({ name: h.name, text: txt, id: h.id });
+    });
+
+    var sug = Array.isArray(obj.suggestions) ? obj.suggestions : [];
+    out.suggestions = sug.filter(function (x) { return typeof x === 'string' && x.trim(); })
+      .map(function (x) { return x.trim().slice(0, 18); }).slice(0, 4);
+
+    if (obj.ending && typeof obj.ending === 'object' && (obj.ending.title || obj.ending.text)) {
+      out.ending = {
+        title: String(obj.ending.title || '到此为止').slice(0, 16),
+        text: String(obj.ending.text || '').slice(0, 600)
+      };
+    }
+    return out;
+  };
+
+  /* ---------------- 离线演示引擎（无密钥试玩） ---------------- */
+  var ENV = {
+    late: ['走廊尽头的灯管在轻微地闪。', '外面雨还没停，声音落在铁皮雨棚上。', '楼下偶尔有车经过，光扫过天花板。'],
+    night: ['夜里的空气有点凉，像从地底下渗出来的。', '远处有人在收摊，铁架子碰在一起响了一声。', '路灯把地面积水照成一片碎掉的镜子。'],
+    day: ['阳光很白，照得人有点睁不开眼。', '风把窗帘吹起来又落下，像谁在呼吸。', '楼下的空调外机在滴水，滴得很准。'],
+    evening: ['天正在暗下去，颜色像被水泡过的纸。', '有人在很远的地方叫另一个人的名字。', '傍晚的风把一整天都吹散了一点。']
+  };
+
+  function envLine(state) {
+    var h = Math.floor(state.world.minutes / 60);
+    var bucket = (h < 5) ? 'late' : (h < 8) ? 'day' : (h < 12) ? 'day' : (h < 17) ? 'day' : (h < 20) ? 'evening' : 'night';
+    var pool = ENV[bucket];
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function pickTarget(state, action) {
+    var hit = null;
+    state.heroines.forEach(function (h) { if (!hit && action.indexOf(h.name) >= 0) hit = h; });
+    if (hit) return hit;
+    var sorted = state.heroines.slice().sort(function (a, b) { return b.affection - a.affection; });
+    return sorted[0] || null;
+  }
+
+  NC.offlineTurn = function (state, action) {
+    var h = pickTarget(state, action);
+    var name = h ? h.name : '';
+    var cat = 'misc';
+    if (/(靠近|碰|牵|抱|摸|靠|亲|搂)/.test(action)) cat = 'close';
+    else if (/(问|说|聊|讲|开口|搭话|介绍|解释|道歉)/.test(action)) cat = 'talk';
+    else if (/(去|走|回|进|离开|到|下楼|上楼|出门)/.test(action)) cat = 'move';
+    else if (/(吃|喝|买|点|买单|请)/.test(action)) cat = 'eat';
+    else if (/(看|观察|听|望|注意|找)/.test(action)) cat = 'look';
+
+    var T = {
+      talk: [
+        '你把话问出口，空气停了一下。她没立刻回答，先低头把手里那件东西摆正，才抬起眼。',
+        '你说完，她没有笑，也没有装作没听见。她只是把语速放慢了，像在挑一个不会伤人的说法。',
+        '她听着，中途打断你一次，问了一个很具体的问题。你答得不太好，她却点了点头。'
+      ],
+      move: [
+        '你往那个方向走。脚下的地面从一种材质换成另一种，声音也跟着变了。',
+        '门推开的时候带着一点阻力。里面的空气比外面暖，混着不太新鲜的味道。',
+        '你走过去，路上的几十秒被拉得很长。她没有回头，但你确定她听见了脚步。'
+      ],
+      eat: [
+        '热气从纸袋口冒出来，糊了一下视线。塑料勺子在杯壁上刮出细小的声音。',
+        '东西很烫，你吹了两下才敢喝。她坐在对面，看你被烫到，眼睛弯了一下。',
+        '收银台的小票被压在杯子底下，风一吹就翻页。'
+      ],
+      close: [
+        '你往前半步。她没有退，也没有顺势靠过来，只是呼吸慢了半拍。',
+        '手背碰到她的手背，只有一瞬。她把手收回去，动作很自然，像只是要拿什么东西。',
+        '距离近到能听见她吞咽的声音。她侧过脸，看着别处，耳后的皮肤有点红。'
+      ],
+      look: [
+        '你把周围看了一圈：墙上的划痕、桌角的水印、垃圾桶里叠得太整齐的纸杯。',
+        '你注意到一些细节——她袖口磨白了，说话时会下意识地摸一下手腕。',
+        '这个地方比你想象的空。所有东西都摆得很规矩，反而显得没人气。'
+      ],
+      misc: [
+        '你做了件没什么道理的事。时间照样往前走，世界没有为你停下来。',
+        '有几秒钟，什么都没发生。然后某样东西轻轻地改变了位置。',
+        '你站在原地，听见自己心跳的节奏，比刚才快一点。'
+      ]
+    };
+
+    var D = {
+      talk: ['「……你问这个干嘛。」', '「先坐吧。站着说话很累。」', '「我不知道该怎么答。换你你会怎么说？」'],
+      move: ['「你还真来了。」', '「这里没什么好看的。」', '「小心台阶，那块砖是松的。」'],
+      eat: ['「烫，慢点。」', '「这个我请。下次你请。」', '「你吃东西的样子挺专心的。」'],
+      close: ['「别。」她声音很轻，但没有躲。', '「你手很凉。」', '「……再这样我要误会了。」'],
+      look: ['「看出什么了？」', '「别乱看。」', '「你观察人的样子像在找工作机会。」'],
+      misc: ['「你在想什么？」', '「……算了，没什么。」', '「你有点奇怪，不过还行。」']
+    };
+
+    var arrT = T[cat], arrD = D[cat];
+    var p1 = arrT[Math.floor(Math.random() * arrT.length)];
+    var d1 = arrD[Math.floor(Math.random() * arrD.length)];
+
+    var narration = envLine(state) + '\n\n' + p1;
+    if (name) narration += '\n\n' + name + '：' + d1;
+    narration += '\n\n' + '（离线演示 · 这段文字由本地模板生成，并未连接 DeepSeek）';
+
+    var aff = cat === 'close' ? 4 : cat === 'talk' ? 3 : cat === 'eat' ? 2 : cat === 'misc' ? 1 : 1;
+    var ten = cat === 'close' ? 6 : cat === 'talk' ? 2 : 1;
+    var tru = cat === 'talk' ? 2 : 1;
+
+    var pool = ['再说一句', '换个地方', '什么都不做', '看着她的侧脸', '问一个更私人的问题'];
+    var sug = [];
+    while (sug.length < 3) {
+      var x = pool[Math.floor(Math.random() * pool.length)];
+      if (sug.indexOf(x) < 0) sug.push(x);
+    }
+
+    return {
+      sceneTitle: state.world.location,
+      narration: narration,
+      location: state.world.location,
+      timeAdvance: cat === 'move' ? 25 : 15,
+      weather: state.world.weather,
+      player: { energy: -3, money: cat === 'eat' ? -25 : 0, charm: 0 },
+      heroines: h ? [{ id: h.id, affection: aff, trust: tru, tension: ten, mood: h.mood, note: '' }] : [],
+      risk: 0,
+      log: '（演示）' + (name ? '你和' + name + '待了一会儿' : '你独自待了一会儿'),
+      unlocks: [],
+      suggestions: sug,
+      ending: null
+    };
+  };
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script>
+/* ============================================================
+   app.js — 界面、状态、回合流程
+   ============================================================ */
+(function (window) {
+  var NC = window.NC;
+  var doc = window.document;
+  var $ = function (s, r) { return (r || doc).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || doc).querySelectorAll(s)); };
+  var esc = NC.esc;
+
+  var LS_SET = 'nocturne.settings.v1';
+  var LS_SAVE = 'nocturne.save.v1';
+
+  var DEFAULTS = {
+    apiKey: '', baseUrl: 'https://api.deepseek.com', model: 'deepseek-chat',
+    temperature: 1, tone: 'restrained', heat: 'warm', showDeltas: true, remember: true, demo: false,
+    fontScale: 'm'
+  };
+
+  var settings = Object.assign({}, DEFAULTS);
+  var state = null;
+  var pendingPreset = null;
+  var selectedId = null;
+  var busy = false;
+  var lastFocus = null;
+  var verifiedKey = '';   /* 上一枚真正验证通过的密钥 */
+
+  /* ================= 基础 ================= */
+  function store(key, val) {
+    try {
+      if (val === undefined) return localStorage.getItem(key);
+      localStorage.setItem(key, val);
+    } catch (e) { return null; }
+    return null;
+  }
+  function unstore(key) { try { localStorage.removeItem(key); } catch (e) { } }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  var toastTimer = null;
+  function toast(msg) {
+    var t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('on'); }, 2200);
+  }
+
+  function applyFont() {
+    try { doc.documentElement.setAttribute('data-fs', settings.fontScale || 'm'); } catch (e) { }
+  }
+  function syncFontSeg() {
+    $$('#fontSeg button').forEach(function (b) {
+      b.classList.toggle('on', b.dataset.fs === (settings.fontScale || 'm'));
+    });
+  }
+
+  function loadSettings() {
+    var raw = store(LS_SET);
+    if (raw) {
+      try {
+        var o = JSON.parse(raw);
+        Object.keys(DEFAULTS).forEach(function (k) {
+          if (o[k] !== undefined) settings[k] = o[k];
+        });
+      } catch (e) { }
+    }
+  }
+  function saveSettings() {
+    var copy = Object.assign({}, settings);
+    if (!settings.remember) copy.apiKey = '';
+    try { store(LS_SET, JSON.stringify(copy)); } catch (e) { }
+  }
+
+  function initFontSeg() {
+    syncFontSeg();
+    var seg = $('#fontSeg');
+    if (!seg) return;
+    seg.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-fs]');
+      if (!b) return;
+      settings.fontScale = b.dataset.fs;
+      applyFont();
+      syncFontSeg();
+      saveSettings();
+      if (state) { state.settings.fontScale = settings.fontScale; save(); }
+    });
+  }
+
+  /* ================= 屏幕切换 ================= */
+  function showScreen(id) {
+    $$('.screen').forEach(function (s) { s.classList.remove('active'); });
+    $('#' + id).classList.add('active');
+    doc.body.classList.remove('right-open', 'left-open');
+  }
+
+  /* ================= 密钥门 ================= */
+  function initLock() {
+    loadSettings();
+    $('#apiKey').value = settings.apiKey || '';
+    $('#baseUrl').value = settings.baseUrl || DEFAULTS.baseUrl;
+    $('#model').value = settings.model || 'deepseek-chat';
+    if ($('#rememberKey')) $('#rememberKey').checked = !!settings.remember;
+
+    /* 一打开就把之前存过的密钥填回去（如果选过「记住」） */
+    if (settings.apiKey) {
+      verifiedKey = '';
+      setKeyStatus('', '已读取上次保存的密钥，可以直接进，也建议点一下验证');
+      var ka = $('#apiKey');
+      if (ka) { ka.classList.toggle('good', NC.keyLooksOk(settings.apiKey)); }
+    }
+
+    $('#toggleKey').addEventListener('click', function () {
+      var i = $('#apiKey');
+      var masked = i.type === 'password';
+      i.type = masked ? 'text' : 'password';
+      this.textContent = masked ? '隐藏' : '显示';
+      try {
+        var n = i.value.length;
+        i.focus();
+        i.setSelectionRange(n, n);
+      } catch (e) { }
+    });
+
+    /* 粘进去的密钥常带着引号、空格或换行——失焦时自动洗一遍并给个确认 */
+    $('#apiKey').addEventListener('blur', function (e) {
+      var el = (e && (e.currentTarget || e.target)) || $('#apiKey');
+      var raw = el.value;
+      if (!raw.trim()) { setKeyStatus('', '还没有验证'); el.classList.remove('bad', 'good'); return; }
+      var clean = NC.normalizeKey(raw);
+      if (clean !== raw) {
+        el.value = clean;
+        setKeyStatus('warn', '已自动去掉引号 / 空格 / 换行');
+      }
+      var ok = NC.keyLooksOk(clean);
+      el.classList.toggle('good', ok);
+      el.classList.toggle('bad', !ok);
+    });
+
+    $('#apiKey').addEventListener('input', function (e) {
+      var el = (e && (e.currentTarget || e.target)) || $('#apiKey');
+      var clean = NC.normalizeKey(el.value);
+      if (verifiedKey && clean !== verifiedKey) verifiedKey = '';
+      var ok = NC.keyLooksOk(clean);
+      el.classList.toggle('good', ok);
+      el.classList.toggle('bad', !!clean && !ok);
+      if (clean && !ok) setKeyStatus('err', '密钥里混进了空格或中文标点');
+      else if (ok) setKeyStatus('', '格式看起来正常，点「验证密钥」确认一下');
+      else setKeyStatus('', '还没有验证');
+    });
+
+    $('#lockForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      enterWithKey();
+    });
+
+    $('#btnVerify').addEventListener('click', function () { runVerify(); });
+
+    $('#btnDemo').addEventListener('click', function () {
+      settings.demo = true;
+      var el = $('#apiKey');
+      var typed = NC.normalizeKey(el ? el.value : '');
+      if (typed) settings.apiKey = typed;   /* 不清空已填的密钥 */
+      saveSettings();
+      goSetup();
+      toast('预览模式：本地模拟文本，不消耗额度');
+    });
+
+    if (store(LS_SAVE)) {
+      var b = $('#btnContinue');
+      b.hidden = false;
+      b.addEventListener('click', function () {
+        if (resume()) showScreen('screen-game');
+      });
+    }
+  }
+
+  function writeStatus(el, kind, text, sub) {
+    if (!el) return;
+    el.className = 'key-status' + (kind ? ' ' + kind : '');
+    el.textContent = text || '';
+    if (sub) {
+      var s = doc.createElement('span');
+      s.className = 'sub';
+      s.textContent = sub;
+      el.appendChild(s);
+    }
+  }
+
+  function setKeyStatus(kind, text, sub) {
+    writeStatus($('#keyStatus'), kind, text, sub);
+  }
+
+  /* 锁屏和设置里共用一套验证逻辑 */
+  function runVerify(scope) {
+    scope = scope || {};
+    var keyEl = $(scope.key || '#apiKey');
+    var baseEl = $(scope.base || '#baseUrl');
+    var modelEl = $(scope.model || '#model');
+    var btn = $(scope.btn || '#btnVerify');
+    var statusEl = $(scope.status || '#keyStatus');
+    var put = function (k, t, s) { writeStatus(statusEl, k, t, s); };
+
+    var key = NC.normalizeKey(keyEl.value);
+    var base = NC.normalizeBase(baseEl.value);
+    if (!key) {
+      put('err', '先填一枚密钥');
+      keyEl.focus();
+      return;
+    }
+    keyEl.value = key;
+    btn.disabled = true;
+    put('busy', '正在连接 ' + base.replace(/^https?:\/\//, '') + ' …');
+
+    NC.probeKey(key, base, modelEl.value).then(function (r) {
+      var good = r.state === 'ok' || r.state === 'nobalance' || r.state === 'limited';
+      put(r.state === 'ok' ? 'ok' : good ? 'warn' : 'err', r.text, r.detail);
+      keyEl.classList.toggle('good', good);
+      keyEl.classList.toggle('bad', !good);
+      if (good) {
+        if (r.state === 'ok') verifiedKey = key;
+        settings.apiKey = key;
+        settings.baseUrl = base;
+        settings.model = modelEl.value;
+        saveSettings();
+        if (state) { state.settings.apiKey = key; state.settings.baseUrl = base; save(); }
+      }
+    }).then(function () {
+      btn.disabled = false;
+    });
+  }
+
+
+  function enterWithKey() {
+    var inp = $('#apiKey');
+    var key = NC.normalizeKey(inp ? inp.value : '');
+    var base = NC.normalizeBase($('#baseUrl') ? $('#baseUrl').value : DEFAULTS.baseUrl);
+
+    if (!key) {
+      setKeyStatus('err', '还没有填密钥。没有密钥的话，可以点下面的「预览模式」先看看');
+      if (inp) { inp.classList.add('bad'); inp.focus(); }
+      return;
+    }
+    if (!NC.keyLooksOk(key)) {
+      setKeyStatus('err', '密钥里有不该出现的字符（空格、引号或中文标点）');
+      if (inp) { inp.classList.add('bad'); inp.focus(); }
+      return;
+    }
+
+    if (inp) {
+      inp.value = key;
+      inp.classList.remove('bad');
+      inp.classList.add('good');
+    }
+
+    settings.apiKey = key;
+    settings.baseUrl = base;
+    settings.model = ($('#model') && $('#model').value) || 'deepseek-chat';
+    settings.remember = $('#rememberKey') ? !!$('#rememberKey').checked : true;
+    settings.demo = false;
+    saveSettings();
+
+    if (verifiedKey && verifiedKey === key) setKeyStatus('ok', '已验证，密钥可用');
+    else if (!/^sk-/i.test(key)) setKeyStatus('warn', '已保存，但这枚密钥不以 sk- 开头，确认一下是否粘对');
+    else setKeyStatus('', '已保存，还没验证过');
+    goSetup();
+  }
+
+  /* ================= 开局 ================= */
+  function goSetup() {
+    showScreen('screen-setup');
+  }
+
+  function initSetup() {
+    var grid = $('#presetGrid');
+    grid.innerHTML = NC.PRESETS.map(function (p) {
+      return '<button type="button" class="pcard" data-id="' + p.id + '">' +
+        '<span class="p-en">' + esc(p.en) + '</span>' +
+        '<div class="p-title">' + esc(p.title) + '</div>' +
+        '<div class="p-tag">' + esc(p.tagline) + '</div>' +
+        '<div class="p-cast">' + p.heroines.map(function (h) {
+          return '<span class="dot" style="color:' + h.color + '"><i></i>' + esc(h.name) + '</span>';
+        }).join('') + '</div>' +
+        '</button>';
+    }).join('');
+
+    grid.addEventListener('click', function (e) {
+      var card = e.target.closest('.pcard');
+      if (!card) return;
+      selectPreset(card.dataset.id);
+    });
+
+    var cg = $('.cfg-grid');
+    if (cg && !$('#cfgPremise')) {
+      cg.insertAdjacentHTML('beforeend',
+        '<label class="field" style="grid-column:1/-1">' +
+        '<span class="field-label">世界前提（可修改，越具体越好）</span>' +
+        '<textarea id="cfgPremise" rows="3" maxlength="400" style="resize:vertical"></textarea>' +
+        '</label>');
+    }
+
+    $('#btnBackLock').addEventListener('click', function () { showScreen('screen-lock'); });
+    $('#btnStart').addEventListener('click', startGame);
+  }
+
+  function selectPreset(id) {
+    pendingPreset = NC.presetById(id);
+    $$('.pcard').forEach(function (c) { c.classList.toggle('on', c.dataset.id === id); });
+
+    $('#cfgTitle').textContent = '开局设置 · ' + pendingPreset.title;
+    $('#cfgPremise').value = pendingPreset.premise || '';
+    $('#cfgCast').innerHTML = pendingPreset.heroines.map(function (h) {
+      return '<div class="cast-item" style="--c:' + h.color + '">' +
+        '<div class="cast-top"><i class="cast-dot"></i><span class="cast-role">' + esc(h.role) + '</span></div>' +
+        '<input type="text" data-id="' + h.id + '" value="' + esc(h.name) + '" maxlength="8" aria-label="角色名">' +
+        '</div>';
+    }).join('');
+
+    var cfg = $('#setupConfig');
+    cfg.hidden = false;
+    setTimeout(function () { cfg.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+  }
+
+  function startGame() {
+    if (!pendingPreset) { toast('先选一个起点'); return; }
+    var names = {};
+    $$('#cfgCast input').forEach(function (i) {
+      names[i.dataset.id] = (i.value || '').trim() || i.defaultValue;
+    });
+    settings.tone = $('#cfgTone').value;
+    settings.heat = $('#cfgHeat').value;
+
+    var premise = ($('#cfgPremise').value || '').trim() ||
+      (pendingPreset.id === 'custom'
+        ? '现代都市，夏末。你搬到这座城市不久，工作一般，朋友不多，夜里常常一个人。'
+        : pendingPreset.premise);
+
+    var opening = pendingPreset.opening;
+    if (!opening) {
+      opening = '夜里九点，城市刚下过雨。\n\n你站在街角，口袋里有一部没什么消息的手机，和一把不知道什么时候会用的钥匙。\n\n接下来发生什么，取决于你往哪边走。';
+    }
+
+    state = NC.newState(pendingPreset, {
+      names: names,
+      playerName: ($('#cfgPlayer').value || '').trim() || '你',
+      settings: Object.assign({}, settings),
+      premise: premise,
+      opening: opening
+    });
+    state.settings = Object.assign({}, settings);
+    state.stream.unshift({
+      t: 'notice',
+      text: settings.demo
+        ? '当前是预览模式：文字由本地模板生成，不调用 API，也不花任何额度。'
+        : '本局用你自己的 DeepSeek 密钥运行，密钥只存在这台设备上，不会上传到任何地方。'
+    });
+    selectedId = state.heroines[0].id;
+    save();
+    enterGame();
+  }
+
+  /* ================= 进入游戏 ================= */
+  function enterGame() {
+    showScreen('screen-game');
+    if (state.settings && state.settings.fontScale) {
+      settings.fontScale = state.settings.fontScale;
+      applyFont();
+      syncFontSeg();
+    }
+    renderHud();
+    renderSide();
+    renderProfile();
+    renderChips();
+    renderChronicle();
+    renderStar();
+    renderStreamFull();
+    updateEnded();
+    syncModeTag();
+  }
+
+  function syncModeTag() {
+    if (!state) return;
+    var tag;
+    if (state.settings.demo) tag = '预览模式';
+    else tag = (state.settings.model || 'deepseek-chat');
+    var el = $('#modeTag');
+    if (el) el.textContent = tag;
+  }
+
+  function resume() {
+    var raw = store(LS_SAVE);
+    if (!raw) { toast('没有存档'); return false; }
+    try {
+      state = JSON.parse(raw);
+      state.settings = Object.assign({}, settings, state.settings || {});
+      state.settings.apiKey = settings.apiKey;
+      if (!state.heroines || !state.heroines.length) throw new Error('bad');
+      if (!state.stream) state.stream = [];
+      if (!state.threads) {
+        var pv = NC.presetById(state.presetId || 'radio');
+        state.threads = { list: (pv.threads || []).slice(), i: 0 };
+      }
+      selectedId = state.heroines[0].id;
+      enterGame();
+      return true;
+    } catch (e) {
+      toast('存档读不出来，可能已损坏');
+      return false;
+    }
+  }
+
+  function save() {
+    if (!state) return;
+    try {
+      var copy = JSON.parse(JSON.stringify(state));
+      if (copy.settings) delete copy.settings.apiKey;
+      copy.stream = (copy.stream || []).slice(-140);
+      copy.recent = (copy.recent || []).slice(-4);
+      store(LS_SAVE, JSON.stringify(copy));
+    } catch (e) { }
+  }
+
+  /* ================= 渲染：顶栏 ================= */
+  function renderHud() {
+    var w = state.world;
+    $('#hud').innerHTML =
+      '<span class="h-item"><b>' + w.day + '</b> 日 · ' + NC.weekday(w.day) + ' ' + NC.hhmm(w.minutes) + '</span>' +
+      '<i class="h-sep"></i>' +
+      '<span class="h-item h-loc">' + esc(w.location) + '</span>' +
+      '<i class="h-sep energy"></i>' +
+      '<span class="h-item energy">精力 <b>' + Math.round(state.player.energy) + '</b></span>' +
+      '<i class="h-sep money"></i>' +
+      '<span class="h-item money">¥ <b>' + Math.round(state.player.money) + '</b></span>';
+    var ps = $('#pstats');
+    if (ps) {
+      ps.innerHTML = '<span>精力 <b>' + Math.round(state.player.energy) + '</b></span>' +
+        '<span>¥ <b>' + Math.round(state.player.money) + '</b></span>' +
+        '<span>回合 <b>' + state.turn + '</b></span>';
+    }
+  }
+
+  /* ================= 渲染：左栏 ================= */
+  function renderSide() {
+    $('#riskBar').style.width = Math.round(state.risk) + '%';
+    $('#riskVal').textContent = Math.round(state.risk);
+    $('#riskLabel').textContent = '修罗场 · ' + NC.riskLabel(state.risk);
+
+    var tp = NC.threadProgress(state);
+    var tpEl = $('#threadProgress');
+    if (tpEl) {
+      tpEl.innerHTML = tp.total
+        ? '<span>暗线</span><b>' + tp.done + ' / ' + tp.total + '</b><i><em style="width:' + Math.round(tp.done / tp.total * 100) + '%"></em></i>'
+        : '';
+    }
+
+    $('#heroineList').innerHTML = state.heroines.map(function (h) {
+      var stage = NC.stageOf(h);
+      var on = h.id === selectedId ? ' on' : '';
+      return '<button type="button" class="hcard' + on + '" data-id="' + h.id + '" style="--c:' + h.color + '">' +
+        '<span class="sig"><span class="sig-ring"></span><span class="sig-char">' + esc(h.name.slice(-1)) + '</span></span>' +
+        '<span class="hinfo">' +
+        '<span class="hname">' + esc(h.name) + '<em>' + esc(stage) + '</em></span>' +
+        '<span class="hrole">' + esc(h.role) + '</span>' +
+        '<span class="bars">' +
+        '<i class="a"><b style="width:' + Math.round(h.affection) + '%"></b></i>' +
+        '<i class="t"><b style="width:' + Math.round(h.tension) + '%"></b></i>' +
+        '</span>' +
+        '</span>' +
+        '</button>';
+    }).join('');
+  }
+
+  /* ================= 渲染：人物档案 ================= */
+  function renderProfile() {
+    var h = null;
+    state.heroines.forEach(function (x) { if (x.id === selectedId) h = x; });
+    if (!h) h = state.heroines[0];
+    var stage = NC.stageOf(h);
+    var known = (h.known || []).slice(-6);
+
+    var html =
+      '<div class="pf-head" style="--c:' + h.color + '">' +
+      '<span class="pf-sig">' + esc(h.name.slice(-1)) + '</span>' +
+      '<span><span class="pf-name">' + esc(h.name) + '</span>' +
+      '<span class="pf-role">' + esc(h.role) + ' · 心情：' + esc(h.mood || '—') + '</span></span>' +
+      '<span class="pf-stage">' + esc(stage) + '</span>' +
+      '</div>' +
+      '<div class="pf-tags" style="--c:' + h.color + '">' + h.tags.map(function (t) {
+        return '<span>' + esc(t) + '</span>';
+      }).join('') + '</div>' +
+      meter('好感', h.affection, 'a', h.color) +
+      meter('信任', h.trust, 'r', h.color) +
+      meter('张力', h.tension, 't', h.color) +
+      '<div class="pf-sub">你知道的</div>' +
+      (known.length
+        ? '<div class="pf-known">' + known.map(function (k) { return '<div>' + esc(k) + '</div>'; }).join('') + '</div>'
+        : '<div class="pf-empty">还没有什么。她显然有些事没说。</div>') +
+      (h.note ? '<div class="pf-note"><em>最近</em>' + esc(h.note) + '</div>' : '') +
+      '<div class="pf-note"><em>状态</em>' + esc(NC.stageHint(stage)) + '</div>';
+
+    $('#profileCard').innerHTML = html;
+  }
+
+  function meter(label, val, cls, color) {
+    var v = Math.max(0, Math.min(100, Math.round(val)));
+    return '<div class="meter ' + cls + '" style="--c:' + color + '">' +
+      '<div class="m-top"><span>' + label + '</span><b>' + v + '</b></div>' +
+      '<div class="m-bar"><b style="width:' + v + '%"></b></div>' +
+      '</div>';
+  }
+
+  /* ================= 渲染：星图 ================= */
+  function renderStar() {
+    var W = 250, H = 176, cx = W / 2, cy = H / 2 + 2, R = 58;
+    var n = Math.max(1, state.heroines.length);
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="starmap">';
+    var pts = state.heroines.map(function (h, i) {
+      var a = -Math.PI / 2 + i * (2 * Math.PI / n);
+      return { h: h, x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
+    });
+    pts.forEach(function (p) {
+      var op = (0.14 + Math.min(0.62, p.h.affection / 150)).toFixed(2);
+      var wd = (0.6 + Math.min(2.2, p.h.affection / 48)).toFixed(2);
+      var dashed = (p.h.trust < 14 && p.h.affection > 28) ? ' stroke-dasharray="3 4"' : '';
+      svg += '<line x1="' + cx + '" y1="' + cy + '" x2="' + p.x.toFixed(1) + '" y2="' + p.y.toFixed(1) +
+        '" stroke="' + p.h.color + '" stroke-opacity="' + op + '" stroke-width="' + wd + '"' + dashed + '/>';
+    });
+    svg += '<circle cx="' + cx + '" cy="' + cy + '" r="16" fill="#ffffff" opacity="0.04"/>' +
+      '<circle cx="' + cx + '" cy="' + cy + '" r="3.2" fill="#f3e9df"/>' +
+      '<text x="' + cx + '" y="' + (cy + 20) + '" class="sm-you">你</text>';
+    pts.forEach(function (p) {
+      var r = 2.4 + Math.min(3.2, p.h.affection / 30);
+      var dy = p.y < cy ? -12 : 19;
+      svg += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + (r + 8).toFixed(1) +
+        '" fill="' + p.h.color + '" opacity="0.10"/>' +
+        '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + r.toFixed(1) +
+        '" fill="' + p.h.color + '"/>' +
+        '<text x="' + p.x.toFixed(1) + '" y="' + (p.y + dy).toFixed(1) + '" class="sm-name" fill="' + p.h.color + '">' +
+        esc(p.h.name) + '</text>';
+    });
+    svg += '</svg>';
+    $('#starmap').innerHTML = svg;
+  }
+
+  /* ================= 渲染：编年史 ================= */
+  function renderChronicle() {
+    var list = (state.chronicle || []).slice(-26).reverse();
+    $('#chronicle').innerHTML = list.map(function (c) {
+      return '<div class="c-item"><time>' + c.day + 'D ' + esc(c.time) + '</time><span>' + esc(c.text) + '</span></div>';
+    }).join('');
+  }
+
+  /* ================= 渲染：正文 ================= */
+  function fmt(s) {
+    return esc(s)
+      .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+      .replace(/\*([^*\n]+)\*/g, '<i>$1</i>');
+  }
+
+  function renderNarration(text) {
+    var paras = String(text || '').split(/\n+/).map(function (s) { return s.trim(); }).filter(Boolean);
+    return paras.map(function (p) {
+      var name = null, rest = null, color = '#c9a38a';
+
+      /* 先看是不是「某个角色名 + 冒号/引号」开头 */
+      state.heroines.forEach(function (h) {
+        if (name || p.indexOf(h.name) !== 0) return;
+        var tail = p.slice(h.name.length);
+        if (/^[：:「]/.test(tail)) {
+          name = h.name;
+          color = h.color;
+          rest = tail.replace(/^[：:]\s*/, '');
+        }
+      });
+
+      /* 再兼容「某人：「……」」这类两到四个字的称呼 */
+      if (!name) {
+        var m = p.match(/^([\u4e00-\u9fa5A-Za-z·]{2,4})\s*[：:]\s*(?=「)/);
+        if (m) { name = m[1]; rest = p.slice(m[0].length); }
+      }
+
+      if (name) {
+        return '<div class="line" style="--c:' + color + '"><span class="who">' + esc(name) + '</span>' +
+          '<p class="say">' + fmt(rest) + '</p></div>';
+      }
+      if (/^[「『"]/.test(p)) {
+        return '<div class="line quote" style="--c:#b9a99c"><p class="say">' + fmt(p) + '</p></div>';
+      }
+      return '<p>' + fmt(p) + '</p>';
+    }).join('');
+  }
+
+  function blockHtml(b) {
+    if (b.t === 'scene') {
+      return '<div class="scene-title">' + esc(b.title || '') +
+        (b.meta ? '<span class="st-meta">' + esc(b.meta) + '</span>' : '') + '</div>';
+    }
+    if (b.t === 'narration') return '<div class="block nar">' + renderNarration(b.text) + '</div>';
+    if (b.t === 'action') {
+      return '<div class="acted"><b>你</b><span>' + esc(b.text) + '</span><em>' + esc(b.stamp || '') + '</em></div>';
+    }
+    if (b.t === 'deltas') {
+      return '<div class="deltas">' + b.items.map(function (d) {
+        return '<span class="delta ' + (d.v > 0 ? 'up' : 'down') + '">' + esc(d.label) + ' ' +
+          (d.v > 0 ? '+' : '') + d.v + '</span>';
+      }).join('') + '</div>';
+    }
+    if (b.t === 'unlock') {
+      return '<div class="unlock"><span class="tag">记下</span>' + b.items.map(function (u) {
+        return '<span>' + esc(u.name) + ' · ' + esc(u.text) + '</span>';
+      }).join('') + '</div>';
+    }
+    if (b.t === 'note') return '<div class="note">' + esc(b.text) + '</div>';
+    if (b.t === 'notice') {
+      return '<div class="notice"><b>说明</b><span>' + esc(b.text) + '</span></div>';
+    }
+    if (b.t === 'error') return '<div class="errbox"><b>卡住了</b>' + esc(b.text) + '</div>';
+    if (b.t === 'ending') {
+      return '<div class="ending"><div class="en-t">结局 · ' + esc(b.title) + '</div>' +
+        renderNarration(b.text) + '</div>';
+    }
+    return '';
+  }
+
+  function scrollBottom() {
+    var s = $('#stream');
+    s.scrollTop = s.scrollHeight;
+  }
+
+  function renderStreamFull() {
+    var s = $('#stream');
+    s.innerHTML = (state.stream || []).map(blockHtml).join('');
+    scrollBottom();
+  }
+
+  function pushBlock(b) {
+    state.stream.push(b);
+    if (state.stream.length > 160) state.stream = state.stream.slice(-160);
+    var s = $('#stream');
+    s.insertAdjacentHTML('beforeend', blockHtml(b));
+    scrollBottom();
+  }
+
+  /* ================= 渲染：建议 ================= */
+  function renderChips() {
+    var list = (state.suggestions || []).slice(0, 4);
+    var html = list.map(function (s) {
+      return '<button type="button" class="chip" data-act="' + esc(s) + '">' + esc(s) + '</button>';
+    }).join('');
+    html += '<button type="button" class="chip fixed" data-act="我在原地待了一会儿，让时间过去。">让时间过去</button>';
+    html += '<button type="button" class="chip fixed" data-act="我环顾四周，先看看这里还有什么。">四处看看</button>';
+    $('#chips').innerHTML = html;
+  }
+
+  /* ================= 回合 ================= */
+  function showThinking(on, text) {
+    var el = $('#thinking');
+    el.hidden = !on;
+    if (text) $('#thinkText').textContent = text;
+    if (on) scrollBottom();
+  }
+
+  function takeTurn(action) {
+    if (busy || !state) return;
+    if (state.ended) { toast('这一段已经结束了'); return; }
+    action = String(action || '').trim().slice(0, 300);
+    if (!action) return;
+
+    busy = true;
+    $('#btnSend').disabled = true;
+    $('#actionInput').disabled = true;
+    pushBlock({ t: 'action', text: action, stamp: '第' + state.world.day + '天 ' + NC.hhmm(state.world.minutes) });
+    state.suggestions = [];
+    renderChips();
+    $('#actionInput').value = '';
+    autoGrow();
+    showThinking(true, state.settings.demo ? '演示引擎在编故事' : '世界正在回应');
+    $('#turnCount').textContent = '第 ' + (state.turn + 1) + ' 回合';
+
+    var task;
+    if (state.settings.demo) {
+      task = sleep(600).then(function () { return NC.offlineTurn(state, action); });
+    } else {
+      task = Promise.resolve().then(function () {
+        return NC.callDeepSeek(state, action);
+      }).then(function (content) {
+        var obj = NC.parseJson(content);
+        var norm = NC.normalize(obj, state);
+        if (norm) return norm;
+        var plain = String(content || '').replace(/```[a-z]*|```/g, '').trim();
+        if (plain.length > 40) {
+          return {
+            sceneTitle: '', narration: plain, location: '', timeAdvance: 20, weather: '',
+            player: { energy: -2, money: 0, charm: 0 }, heroines: [], risk: 0, log: '',
+            unlocks: [], suggestions: [], ending: null
+          };
+        }
+        throw new Error('模型返回的内容解析不出来，再发一次试试。');
+      });
+    }
+
+    task.then(function (res) {
+      applyResult(res);
+    }).catch(function (e) {
+      var msg;
+      if (e && e.message === 'NO_KEY') {
+        msg = '还没有填密钥。点右上角「设置」，填一枚 DeepSeek API 密钥就能继续。';
+      } else if (e && (e.status === 401 || e.status === 403)) {
+        msg = '密钥无效（' + e.status + '）。到「设置」里检查一下是否粘完整，或者换一枚新的。';
+      } else if (e && e.status === 402) {
+        msg = '账户余额不足（402）。到 DeepSeek 控制台充值后重试。';
+      } else {
+        msg = NC.networkMessage(e);
+      }
+      pushBlock({ t: 'error', text: msg });
+    }).then(function () {
+      busy = false;
+      $('#btnSend').disabled = false;
+      $('#actionInput').disabled = false;
+      showThinking(false);
+      renderHud();
+      renderSide();
+      renderProfile();
+      renderStar();
+      renderChronicle();
+      renderChips();
+      updateEnded();
+      save();
+      if (!state.ended && window.innerWidth > 900) $('#actionInput').focus();
+      syncModeTag();
+    });
+  }
+
+  function applyResult(r) {
+    var w = state.world;
+    state.turn++;
+    var d0 = w.day, t0 = NC.hhmm(w.minutes);
+
+    /* 时间 */
+    w.minutes += r.timeAdvance;
+    while (w.minutes >= 1440) { w.minutes -= 1440; w.day++; }
+    if (r.location) w.location = r.location;
+    if (r.weather) w.weather = r.weather;
+
+    /* 玩家 */
+    var beforeEnergy = state.player.energy;
+    state.player.energy = NC.clamp(state.player.energy + r.player.energy, 0, 100);
+    state.player.money = Math.max(0, state.player.money + r.player.money);
+    state.player.charm = NC.clamp(state.player.charm + r.player.charm, 0, 20);
+    state.risk = NC.clamp(state.risk + r.risk, 0, 100);
+
+    /* 人物 */
+    var deltas = [];
+    var stageNotes = [];
+    r.heroines.forEach(function (hu) {
+      var h = null;
+      state.heroines.forEach(function (x) { if (x.id === hu.id) h = x; });
+      if (!h) return;
+      var st0 = NC.stageOf(h);
+      h.affection = NC.clamp(h.affection + hu.affection, 0, 100);
+      h.trust = NC.clamp(h.trust + hu.trust, 0, 100);
+      h.tension = NC.clamp(h.tension + hu.tension, 0, 100);
+      if (hu.mood) h.mood = hu.mood;
+      if (hu.note) h.note = hu.note;
+      var st1 = NC.stageOf(h);
+      if (st1 !== st0) stageNotes.push(h.name + ' · 你们的关系变成「' + st1 + '」');
+      if (hu.affection) deltas.push({ label: h.name + ' 好感', v: hu.affection });
+      if (hu.trust) deltas.push({ label: h.name + ' 信任', v: hu.trust });
+      if (hu.tension) deltas.push({ label: h.name + ' 张力', v: hu.tension });
+    });
+
+    /* 正文 */
+    if (r.sceneTitle || r.location) {
+      pushBlock({
+        t: 'scene',
+        title: r.sceneTitle || r.location,
+        meta: '第 ' + d0 + ' 天 · ' + t0
+      });
+    }
+    pushBlock({ t: 'narration', text: r.narration });
+
+    if (state.settings.showDeltas) {
+      if (deltas.length) pushBlock({ t: 'deltas', items: deltas.slice(0, 6) });
+      var sys = [];
+      if (r.player.money) sys.push({ label: '钱包', v: r.player.money });
+      if (r.player.energy) sys.push({ label: '精力', v: r.player.energy });
+      if (r.risk) sys.push({ label: '修罗场', v: r.risk });
+      if (sys.length) pushBlock({ t: 'deltas', items: sys });
+    }
+
+    /* 解锁 */
+    if (r.unlocks.length) {
+      r.unlocks.forEach(function (u) {
+        var h = null;
+        state.heroines.forEach(function (x) { if (x.id === u.id) h = x; });
+        if (h && h.known.indexOf(u.text) < 0) h.known.push(u.text);
+      });
+      pushBlock({ t: 'unlock', items: r.unlocks.slice(0, 3) });
+    }
+
+    /* 关系阶段提示 */
+    if (stageNotes.length) pushBlock({ t: 'note', text: stageNotes.join('　·　') });
+
+    if (beforeEnergy > 20 && state.player.energy <= 12) {
+      pushBlock({ t: 'note', text: '你很累了。视线开始有点散。' });
+    }
+
+    /* 暗线推进：每两回合往前一格，不快不慢 */
+    if (state.threads && state.threads.list && state.threads.list.length) {
+      if (!state.threads.i) state.threads.i = 0;
+      if (state.turn % 2 === 0 && state.threads.i < state.threads.list.length) state.threads.i++;
+    }
+
+    /* 编年史 */
+    state.chronicle.push({
+      day: w.day,
+      time: NC.hhmm(w.minutes),
+      text: (r.log || '').trim() || (r.narration.slice(0, 26) + '…')
+    });
+    if (state.chronicle.length > 80) state.chronicle = state.chronicle.slice(-80);
+
+    /* 供下一回合参考的片段 */
+    state.recent.push(r.narration.slice(0, 500));
+    if (state.recent.length > 3) state.recent = state.recent.slice(-3);
+
+    state.suggestions = r.suggestions.slice(0, 4);
+
+    /* 结局 */
+    if (r.ending) {
+      pushBlock({ t: 'ending', title: r.ending.title, text: r.ending.text });
+      state.ended = r.ending;
+    }
+  }
+
+  function updateEnded() {
+    var banner = $('#endedBanner');
+    if (state && state.ended) {
+      banner.hidden = false;
+      $('#endedTitle').textContent = '「' + state.ended.title + '」';
+      $('#actionInput').disabled = true;
+      $('#btnSend').disabled = true;
+    } else {
+      banner.hidden = true;
+      $('#actionInput').disabled = false;
+      $('#btnSend').disabled = false;
+    }
+  }
+
+  /* ================= 输入区 ================= */
+  function autoGrow() {
+    var t = $('#actionInput');
+    t.style.height = 'auto';
+    t.style.height = Math.min(132, t.scrollHeight) + 'px';
+  }
+
+  function initComposer() {
+    var input = $('#actionInput');
+    input.addEventListener('input', autoGrow);
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+        e.preventDefault();
+        takeTurn(input.value);
+      }
+    });
+    $('#btnSend').addEventListener('click', function () { takeTurn(input.value); });
+
+    $('#chips').addEventListener('click', function (e) {
+      var c = e.target.closest('.chip');
+      if (!c || busy) return;
+      takeTurn(c.dataset.act);
+    });
+
+    $('#dirHint').addEventListener('click', function () {
+      input.value = '// ';
+      autoGrow();
+      input.focus();
+      toast('例：// 突然停电，外面开始下大雨');
+    });
+
+    $('#btnEndedContinue').addEventListener('click', function () {
+      state.ended = null;
+      pushBlock({ t: 'note', text: '夜还没有结束。' });
+      updateEnded();
+      save();
+      input.focus();
+    });
+    $('#btnEndedRestart').addEventListener('click', restart);
+  }
+
+  /* ================= 设置 ================= */
+  function openSettings() {
+    $('#setKey').value = settings.apiKey || '';
+    $('#setBase').value = settings.baseUrl || DEFAULTS.baseUrl;
+    $('#setModel').value = settings.model || 'deepseek-chat';
+    $('#setTemp').value = settings.temperature;
+    $('#tempVal').textContent = Number(settings.temperature).toFixed(1);
+    $('#setDeltas').checked = !!settings.showDeltas;
+    $('#setDemo').checked = !!(state ? state.settings.demo : settings.demo);
+    writeStatus($('#setKeyStatus'), '', settings.apiKey ? '已保存一枚密钥' : '还没有验证');
+    $('#setKey').classList.remove('good', 'bad');
+    syncFontSeg();
+    var u = state && state.usage;
+    $('#usageHint').textContent = u
+      ? '本局已消耗 ' + (u.prompt + u.completion).toLocaleString() + ' tokens（输入 ' + u.prompt.toLocaleString() + ' / 输出 ' + u.completion.toLocaleString() + '）'
+      : '还没有调用过接口。';
+    $('#modalSettings').classList.add('open');
+    lastFocus = doc.activeElement;
+  }
+  function closeSettings() {
+    settings.apiKey = NC.normalizeKey($('#setKey') ? $('#setKey').value : '');
+    settings.baseUrl = NC.normalizeBase($('#setBase').value);
+    if ($('#setKey')) $('#setKey').value = settings.apiKey;
+    settings.model = $('#setModel').value;
+    settings.temperature = Number($('#setTemp').value) || 1;
+    settings.showDeltas = $('#setDeltas').checked;
+    settings.demo = $('#setDemo').checked;
+    saveSettings();
+    if (state) {
+      var wasDemo = state.settings.demo;
+      state.settings = Object.assign({}, settings, { apiKey: settings.apiKey });
+      save();
+      if (wasDemo && !settings.demo) pushBlock({ t: 'note', text: '已切回 DeepSeek 模式。' });
+    }
+    $('#modalSettings').classList.remove('open');
+    syncModeTag();
+  }
+
+  function initSettings() {
+    $('#btnSettings').addEventListener('click', openSettings);
+
+    $('#btnVerifySet').addEventListener('click', function () {
+      runVerify({
+        key: '#setKey', base: '#setBase', model: '#setModel',
+        btn: '#btnVerifySet', status: '#setKeyStatus'
+      });
+    });
+    $$('#modalSettings [data-close]').forEach(function (b) {
+      b.addEventListener('click', closeSettings);
+    });
+    $('#modalSettings').addEventListener('click', function (e) {
+      if (e.target === this) closeSettings();
+    });
+    $('#setTemp').addEventListener('input', function () {
+      $('#tempVal').textContent = Number(this.value).toFixed(1);
+    });
+
+    $('#btnExport').addEventListener('click', function () {
+      if (!state) return;
+      var copy = JSON.parse(JSON.stringify(state));
+      delete copy.settings.apiKey;
+      copy._meta = { app: 'nocturne', exportedAt: new Date().toISOString() };
+      var blob = new Blob([JSON.stringify(copy, null, 2)], { type: 'application/json' });
+      var a = doc.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'nocturne-第' + state.world.day + '天.json';
+      doc.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      toast('存档已导出');
+    });
+
+    $('#btnImport').addEventListener('click', function () { $('#fileImport').click(); });
+    $('#fileImport').addEventListener('change', function (e) {
+      var f = e.target.files && e.target.files[0];
+      if (!f) return;
+      var fr = new FileReader();
+      fr.onload = function () {
+        try {
+          var obj = JSON.parse(fr.result);
+          if (!obj.heroines) throw new Error('bad');
+          obj.settings = Object.assign({}, settings, obj.settings || {});
+          obj.settings.apiKey = settings.apiKey;
+          state = obj;
+          if (!state.stream) state.stream = [];
+          selectedId = state.heroines[0].id;
+          save();
+          enterGame();
+          closeSettings();
+          toast('存档已导入');
+        } catch (err) { toast('这个文件读不出来'); }
+      };
+      fr.readAsText(f);
+      e.target.value = '';
+    });
+
+    $('#btnRestart').addEventListener('click', restart);
+  }
+
+  function restart() {
+    if (!confirm('放弃这一局？当前的进度会被清掉。')) return;
+    unstore(LS_SAVE);
+    state = null;
+    selectedId = null;
+    pendingPreset = null;
+    $('#modalSettings').classList.remove('open');
+    $('#setupConfig').hidden = true;
+    $$('.pcard').forEach(function (c) { c.classList.remove('on'); });
+    var cont = $('#btnContinue');
+    if (cont) cont.hidden = true;
+    showScreen('screen-setup');
+  }
+
+  /* ================= 移动端抽屉 ================= */
+  function initSheets() {
+    $('#btnRelations').addEventListener('click', function () {
+      doc.body.classList.toggle('left-open');
+    });
+    $('#btnArchive').addEventListener('click', function () {
+      doc.body.classList.toggle('right-open');
+    });
+    $('#backdrop').addEventListener('click', function () {
+      doc.body.classList.remove('left-open', 'right-open');
+    });
+    $('#heroineList').addEventListener('click', function (e) {
+      var card = e.target.closest('.hcard');
+      if (!card) return;
+      selectedId = card.dataset.id;
+      renderSide();
+      renderProfile();
+      if (window.innerWidth <= 900) doc.body.classList.remove('left-open');
+      if (window.innerWidth <= 1180 && window.innerWidth > 900) doc.body.classList.add('right-open');
+    });
+    doc.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        doc.body.classList.remove('left-open', 'right-open');
+        if ($('#modalSettings').classList.contains('open')) closeSettings();
+      }
+    });
+  }
+
+  /* ================= 作者联系方式 ================= */
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      try {
+        var ta = doc.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        ta.style.top = '0';
+        doc.body.appendChild(ta);
+        ta.select();
+        var ok = doc.execCommand && doc.execCommand('copy');
+        doc.body.removeChild(ta);
+        ok ? resolve() : reject(new Error('copy failed'));
+      } catch (e) { reject(e); }
+    });
+  }
+
+  function initAuthor() {
+    doc.addEventListener('click', function (e) {
+      var el = e.target && e.target.closest ? e.target.closest('[data-copy]') : null;
+      if (!el) return;
+      var text = el.getAttribute('data-copy');
+      if (!text) return;
+      copyText(text).then(function () {
+        toast('已复制 ' + text);
+        var tag = el.querySelector('.author-copy');
+        if (tag) {
+          var old = tag.textContent;
+          tag.textContent = '已复制';
+          setTimeout(function () { tag.textContent = old; }, 1400);
+        }
+      }).catch(function () {
+        toast('复制失败，手动记一下：' + text);
+      });
+    });
+  }
+
+  /* ================= 启动 ================= */
+  function init() {
+    initLock();
+    initSetup();
+    initComposer();
+    initSettings();
+    initSheets();
+    initAuthor();
+    initFontSeg();
+    applyFont();
+    autoGrow();
+  }
+
+  if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', init);
+  else init();
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+</body>
+</html>
